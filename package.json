@@ -1,0 +1,22 @@
+{
+ "bin": {
+  "clean-pdi": "bin/clean-pdi.js",
+  "kill-pentaho-server": "bin/kill-pentaho-server.js",
+  "start-pentaho-server": "bin/start-pentaho-server.js",
+  "ant-common-ui": "bin/ant-common-ui.js",
+  "mvn-turbo": "bin/mvn-turbo.js",
+  "intellij-debug": "bin/intellij-debug.js"
+ },
+ "scripts": {
+  "intellij-debug": "intellij-debug"
+ },
+ "name": "scripts",
+ "version": "1.0.0",
+ "main": "index.js",
+ "author": "David Santos <david.m.santos90@gmail.com>",
+ "license": "MIT",
+ "dependencies": {
+  "path": "^0.12.7",
+  "shelljs": "^0.7.5"
+ }
+}
