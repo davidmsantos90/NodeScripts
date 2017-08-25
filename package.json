@@ -1,22 +1,22 @@
 {
- "bin": {
-  "clean-pdi": "bin/clean-pdi.js",
-  "kill-pentaho-server": "bin/kill-pentaho-server.js",
-  "start-pentaho-server": "bin/start-pentaho-server.js",
-  "ant-common-ui": "bin/ant-common-ui.js",
-  "mvn-turbo": "bin/mvn-turbo.js",
-  "intellij-debug": "bin/intellij-debug.js"
- },
- "scripts": {
-  "intellij-debug": "intellij-debug"
- },
- "name": "scripts",
- "version": "1.0.0",
- "main": "index.js",
- "author": "David Santos <david.m.santos90@gmail.com>",
- "license": "MIT",
- "dependencies": {
-  "path": "^0.12.7",
-  "shelljs": "^0.7.5"
- }
+  "bin": {
+    "clean-karaf": "bin/cleanKaraf/clean-karaf.js",
+    "kill-pentaho-server": "bin/kill-pentaho-server.js",
+    "start-pentaho-server": "bin/start-pentaho-server.js",
+    "mvn-turbo": "bin/mvn-turbo.js"
+  },
+  "name": "scripts",
+  "version": "1.0.0",
+  "main": "index.js",
+  "author": "David Santos <david.m.santos90@gmail.com>",
+  "license": "MIT",
+  "dependencies": {
+    "command-line-args": "^4.0.0",
+    "command-line-usage": "^4.0.0",
+    "path": "^0.12.7",
+    "shelljs": "^0.7.5"
+  },
+  "devDependencies": {
+    "node-fetch": "^1.7.1"
+  }
 }
