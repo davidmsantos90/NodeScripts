@@ -6,8 +6,7 @@ echo('\n')
 
 exec('clean-karaf -r ./pentaho-solutions/')
 
-rm('-f', 'promptuser.sh promptuser.js')
-// rm('-f', 'promptuser.js')
+// rm('-f', 'promptuser.*')
 
 echo('\n')
 

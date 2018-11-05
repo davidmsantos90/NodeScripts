@@ -1,12 +1,13 @@
 {
   "bin": {
     "clean-karaf": "dist/clean-karaf/index.js",
+    "setup-build": "dist/setup-build/index.js",
     "kill-pentaho-server": "dist/kill-pentaho-server.js",
     "start-pentaho-server": "dist/start-pentaho-server.js",
     "mvn-turbo": "dist/mvn-turbo.js"
   },
   "scripts": {
-    "start": "npx babel src -d dist"
+    "postinstall": "npx babel src -d dist"
   },
   "name": "scripts",
   "version": "1.0.0",
