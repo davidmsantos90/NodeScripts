@@ -7,7 +7,7 @@
     "mvn-turbo": "dist/mvn-turbo.js"
   },
   "scripts": {
-    "postinstall": "npx babel src -d dist"
+    "postinstall": "npx babel src -d dist --copy-files"
   },
   "name": "scripts",
   "version": "1.0.0",
