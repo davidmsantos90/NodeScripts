@@ -2,22 +2,20 @@
 
 import { echo } from 'shelljs'
 
-import { options, help } from './arguments'
-
-import {
-  serverDownload, serverExtract,
-  pdiDownload, pdiExtract
-} from './executions'
+import setupBuildUtils from './utils'
+import { server, pdi } from './executions'
 
 
 // ---
 
-if (options.help) {
-  echo(help)
-} else if (options.path == null) {
-  echo(`[WARNING] Define 'path' in the './local.config.json' or by using the '-p' option!`)
-} else {
-  if (options.execution === 'server') serverDownload().then(() => serverExtract())
+if (setupBuildUtils.isHelp) {
+  echo(setupBuildUtils.help)
 
-  if (options.execution === 'pdi' ) pdiDownload().then(() => pdiExtract())
+} else if (!setupBuildUtils.isBaseFolderDefined) {
+  echo(`[WARNING] Define 'path' in the './local.config.json' or by using the '-p' option!`)
+
+} else {
+  if (setupBuildUtils.isServerMode) server()
+
+  if (setupBuildUtils.isPdiMode) pdi()
 }

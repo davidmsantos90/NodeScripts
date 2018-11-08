@@ -1,78 +1,146 @@
 import { join, parse, dirname, basename } from 'path'
-import { exec, echo, rm, mkdir } from 'shelljs'
+import { exec, echo, which, rm, mkdir } from 'shelljs'
 import { exists } from 'fs'
 
-import { options } from './arguments'
+import npmDownload from 'download'
+import npmUnzip from 'decompress'
 
-const execSettings = {
-  silent: true
+import setupBuildUtils from './utils'
+
+export { download, extract, cleanup }
+
+const download = ({ link, destination }) => {
+  let downloadImpl = null
+  const downloadFolder = dirname(destination)
+
+  const wgetInstalled = which('wget') != null
+  if (wgetInstalled) {
+    downloadImpl = () => {
+      const command = `wget -q -O ${ destination } ${ link }`
+
+      mkdir('-p', downloadFolder)
+
+      return __promiseExec(command)
+    }
+  } else {
+    downloadImpl = () => npmDownload(link, downloadFolder)
+  }
+
+  return __downloadWrap(link, destination, downloadImpl)
 }
 
-const isDebug = options.debug
+const extract = ({ source, destination, pluginName }) => {
+  const unzipInstalled = which('unzip') != null
 
-export const download = ({ link, destination }) => new Promise((resolve, reject) => {
-  if (isDebug) {
+  let extractImpl = null
+  if (unzipInstalled) {
+    extractImpl = () => {
+      mkdir('-p', destination)
+
+      const command = `unzip -q ${ source } -d ${ destination }`
+
+      return __promiseExec(command)
+    }
+  } else {
+    extractImpl = () => npmUnzip(source, destination)
+      .then(() => undefined/* silent npmUnzip execution */)
+  }
+
+  return __extractWrap(source, destination, pluginName, extractImpl)
+}
+
+const cleanup = ({ source, actions }) => {
+  if (setupBuildUtils.isDebug) {
+    const debugMessage =`[DEBUG] Cleanup Folder: ${ source }`
+
+    return Promise.resolve(debugMessage)
+  }
+
+  echo(`[INFO] Cleaning up '${ source }' folder.`)
+
+  return Promise.all(actions())
+    .then(() => Promise.resolve(`[INFO] Cleanup to '${ source }' complete.`))
+    .catch(() => Promise.reject(`[ERROR] Something went wrong cleaning up '${ source }!`))
+}
+
+const __promiseExec = (command, settings = { silent: true }) => new Promise((resolve, reject) => {
+  exec(command, settings, (code/*, output, error*/) => {
+    const isErrorCode = code !== 0
+
+    return isErrorCode ? reject() : resolve()
+  })
+})
+
+const __downloadWrap = (link, destination, downloadImpl) => new Promise((resolve, reject) => {
+  if (setupBuildUtils.isDebug) {
     const debugMessage =`[DEBUG] Download Link: ${ link }\n[DEBUG] Download Destination: ${ destination }`
 
     return resolve(debugMessage)
   }
 
-  exists(destination, (exists) => {
-    const { dir: downloadFolder, base: downloadName } = parse(destination)
+  exists(destination, (isDownloaded) => {
+    const downloadName = basename(destination)
 
-    if (exists) {
+    if (isDownloaded) {
       return resolve(`[WARNING] File '${ downloadName }' already downloaded!`)
     }
 
-    mkdir('-p', downloadFolder)
-
     echo(`[INFO] Downloading '${ link }'`)
 
-    const command = `wget -q -O ${ destination } ${ link }`
-    exec(command, execSettings, (code/*, output, error*/) => {
-      const isErrorCode = code !== 0
-      if (isErrorCode) {
-        return reject(`[ERROR] Something went wrong downloading '${ link }!`)
-      }
+    return downloadImpl()
+      .then((success) => {
+        const message = success == null
+          ? `[INFO] Downloaded to '${ destination }'`
+          : success
 
-      resolve(`[INFO] Downloaded to '${ destination }'`)
-    })
+        return resolve(message)
+      }).catch((error) => {
+        const message = error == null
+          ? `[ERROR] Something went wrong downloading '${ link }!`
+          : error
+
+        return reject(message)
+      })
   })
 
-}).then((message) => echo(message)).catch((error) => {
+}).then((success) => echo(success)).catch((error) => {
   echo(error)
 
   rm('-rf', destination)
 })
 
-export const extract = ({ source, destination, pluginName }) => new Promise((resolve, reject) => {
-  if (isDebug) {
+const __extractWrap = (source, destination, pluginName, extractImpl) => new Promise((resolve, reject) => {
+  if (setupBuildUtils.isDebug) {
     const debugMessage = `[DEBUG] Extract Source: ${ source }\n[DEBUG] Extract Destination: ${ destination }`
 
     return resolve(debugMessage)
   }
 
   const location = join(destination, pluginName != null ? pluginName : '')
-  exists(location, (exists) => {
+
+  exists(location, (isExtracted) => {
     const { dir: zipFolder, base: zipFile } = parse(source)
 
-    if (exists) {
+    if (isExtracted) {
       return resolve(`[WARNING] File '${ zipFile }' already extracted!`)
     }
 
-    mkdir('-p', destination)
-
     echo(`[INFO] Extracting '${ zipFile }'`)
 
-    const command = `unzip -q ${ source } -d ${ destination }`
-    exec(command, execSettings, (code/*, output, error*/) => {
-      const isErrorCode = code !== 0
-      if (isErrorCode) {
-        return reject(`[ERROR] Something went wrong extracting '${ zipFile }!`)
-      }
+    return extractImpl()
+      .then((success) => {
+        const message = success == null
+          ? `[INFO] Extracted '${ zipFile }' to '${ destination }'`
+          : success
 
-      resolve(`[INFO] Extracted '${ zipFile }' to '${ destination }'`)
-    })
+        return resolve(message)
+      }).catch((error) => {
+        const message = error == null
+          ? `[ERROR] Something went wrong extracting '${ zipFile }!`
+          : error
+
+        return reject(message)
+      })
   })
 
 }).then((message) => echo(message)).catch((error) => {

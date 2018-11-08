@@ -17,6 +17,8 @@
   "dependencies": {
     "command-line-args": "^4.0.0",
     "command-line-usage": "^4.0.0",
+    "decompress": "^4.2.0",
+    "download": "^7.1.0",
     "node-fetch": "^2.2.0",
     "shelljs": "^0.8.2"
   },

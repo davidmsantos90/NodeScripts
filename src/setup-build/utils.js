@@ -1,155 +1,130 @@
 import { join } from 'path'
 
-const BASE_BUILDS_URL = 'http://lisbon-build.pentaho.com/hosted'
+import { options, help } from './arguments'
 
 const DOWNLOAD_FOLDER = 'downloads'
+
+const SERVER_EXEC = 'server'
+const PDI_EXEC = 'pdi'
+
+const PENTAHO_SERVER_FOLDER = 'pentaho-server'
+const PENTAHO_SOLUTIONS_FOLDER = 'pentaho-solutions'
+
+const DATA_INTEGRATION_FOLDER = 'data-integration'
+
+const SYSTEM_FOLDER = 'system'
+const KARAF_FOLDER = 'karaf'
+const KARAF_ETC_FOLDER = 'etc'
 
 const RELEASE = 'RELEASE'
 const SNAPSHOT = 'SNAPSHOT'
 const QAT = 'QAT'
 
-const SERVER_ARTIFACT = 'pentaho-server-ee'
-const PDI_ARTIFACT = 'pdi-ee-client'
-const ANALYZER_ARTIFACT = 'paz-plugin-ee'
+const SetupBuildUtils = ({
+  version, type, path, link, build = '?', execution: _execution, help: _isHelp, debug: _isDebug
+}) => {
+  const typeFolder = type.toLowerCase()
+  const typeTag = type.toUpperCase()
 
+  const isSnapshot = typeTag === SNAPSHOT
+  const isQat = typeTag === QAT
+  const isRelease = typeTag === RELEASE
 
-const utils = ({ version, type, path, build = '?' }) => {
-  const SERVER_PLUGINS_FOLDER = join('pentaho-server', 'pentaho-solutions', 'system')
+  const artifactSuffix =  `-${ version }${ !isRelease ? '-' + typeTag : '' }-${ build }`
+  const downloadArtifactSuffix = `-${ version }-${ isSnapshot ? typeTag : build }`
 
-  const BASE_BUILDS_FOLDER = path
+  const linkVersion = isQat ? version.replace(/\.[0-9]\.[0-9]$/, '') : version
+  const urlVersionTag = `${ linkVersion }${ !isRelease ? '-' + typeTag : '' }`
+  const downloadLink = `${ link }/${ urlVersionTag }/${ build }`
+
+  // ---
+
+  const downloadPath = join(path, DOWNLOAD_FOLDER, typeFolder, build)
+  const extractPath = join(path, typeFolder, build)
+
+  const serverSystemFolder = join(PENTAHO_SERVER_FOLDER, PENTAHO_SOLUTIONS_FOLDER, SYSTEM_FOLDER)
+  const serverKarafEtcFolder = join(serverSystemFolder, KARAF_FOLDER, KARAF_ETC_FOLDER)
+
+  const pdiSystemFolder = join(DATA_INTEGRATION_FOLDER, SYSTEM_FOLDER)
+  const pdiKarafEtcFolder = join(pdiSystemFolder, KARAF_FOLDER, KARAF_ETC_FOLDER)
 
   return {
-    __version: version,
-    get _version() {
-      return this.__version
-    },
-    get _shortVersion() {
-      return this.__version.replace(/\.[0-9]\.[0-9]$/, '')
-    },
-
-    __build: build,
-    get _buildNumber() {
-      return this.__build
-    },
-
-    __type: type,
-    get _typeFolder() {
-      return this.__type.toLowerCase()
-    },
-    get _typeTag() {
-      return this.__type.toUpperCase()
-    },
-
-    get isSnapshot() {
-      return this._typeTag === SNAPSHOT
-    },
-    get isQat() {
-      return this._typeTag === QAT
-    },
-    get isRelease() {
-      return this._typeTag === RELEASE
-    },
-
-    /*
-      SNAPSHOT | QAT: -version-type-build
-      RELEASE: -version-build
-    */
-    __artifactSuffix: null,
-    get _artifactSuffix() {
-      if (this.__artifactSuffix == null) {
-        this.__artifactSuffix = `-${ this._version }${ !this.isRelease ? '-' + this._typeTag : '' }-${ this._buildNumber }`
+    serverFolders(artifact) {
+      return {
+        base: this.extractOutput(artifact),
+        scripts: this.extractOutput(artifact, PENTAHO_SERVER_FOLDER),
+        system: this.extractOutput(artifact, serverSystemFolder),
+        karafEtc: this.extractOutput(artifact, serverKarafEtcFolder)
       }
-
-      return this.__artifactSuffix
     },
 
-    __downloadArtifactSuffix: null,
-    get _downloadArtifaxSuffix() {
-      if (this.__downloadArtifactSuffix == null) {
-        this.__downloadArtifactSuffix = `-${ this._version }-${ this.isSnapshot ? this._typeTag : this._buildNumber }`
+    pdiFolders(artifact) {
+      return {
+        base: this.extractOutput(artifact),
+        scripts: this.extractOutput(artifact, DATA_INTEGRATION_FOLDER),
+        system: this.extractOutput(artifact, pdiSystemFolder),
+        karafEtc: this.extractOutput(artifact, pdiKarafEtcFolder)
       }
-
-      return this.__downloadArtifactSuffix
     },
 
-    __downloadUrl: null,
-    get _downloadUrl() {
-      if (this.__downloadUrl == null) {
-        const urlVersionTag = `${ this.isQat ? this._shortVersion : this._version }${ !this.isRelease ? '-' + this._typeTag : '' }`
-
-        this.__downloadUrl = `${ BASE_BUILDS_URL }/${ urlVersionTag }/${ this._buildNumber }`
-      }
-
-      return this.__downloadUrl
+    join(...paths) {
+      return join(...paths)
     },
+
+    get isHelp() {
+      return _isHelp
+    },
+
+    get isDebug() {
+      return _isDebug
+    },
+
+    get isBaseFolderDefined() {
+      return path != null
+    },
+
+    get help() {
+      return help
+    },
+
+    get isServerMode() {
+      return _execution === SERVER_EXEC
+    },
+
+    get isPdiMode() {
+      return _execution === PDI_EXEC
+    },
+
     _downloadBuildName(artifact) {
-      return `${ artifact + this._downloadArtifaxSuffix }.zip`
+      return `${ artifact + downloadArtifactSuffix }.zip`
     },
 
-    _genericDownloadLink(artifact) {
-      return `${ this._downloadUrl }/${ this._downloadBuildName(artifact) }`
-    },
-    get pdiDownloadLink() {
-      return this._genericDownloadLink(PDI_ARTIFACT)
-    },
-    get serverDownloadLink() {
-      return this._genericDownloadLink(SERVER_ARTIFACT)
-    },
-    get analyzerDownloadLink() {
-      return this._genericDownloadLink(ANALYZER_ARTIFACT)
+    _artifactBuildFolder(artifact) {
+      return `${ artifact + artifactSuffix }`
     },
 
-    _downloadOverrideName(artifact) {
-      return `${ artifact + this._artifactSuffix }.zip`
+    _artifactBuildZip(artifact) {
+      return `${ this._artifactBuildFolder(artifact) }.zip`
     },
 
-    __buildDownloadPath: null,
-    get _buildDownloadPath() {
-      if (this.__buildDownloadPath == null ) {
-        this.__buildDownloadPath = join(BASE_BUILDS_FOLDER, DOWNLOAD_FOLDER, this._typeFolder, this._buildNumber)
-      }
-
-      return this.__buildDownloadPath
+    downloadLink(artifact) {
+      return `${ downloadLink }/${ this._downloadBuildName(artifact) }`
     },
 
-    _genericDownloadPath(artifact) {
-      return join(this._buildDownloadPath, this._downloadOverrideName(artifact))
-    },
-    get pdiDownloadLocation() {
-      return this._genericDownloadPath(PDI_ARTIFACT)
-    },
-    get serverDownloadLocation() {
-      return this._genericDownloadPath(SERVER_ARTIFACT)
-    },
-    get analyzerDownloadLocation() {
-      return this._genericDownloadPath(ANALYZER_ARTIFACT)
+    downloadOutput(artifact) {
+      return this.join(downloadPath, this._artifactBuildZip(artifact))
     },
 
-    __buildExtractPath: null,
-    get _buildExtractPath() {
-      if (this.__buildExtractPath == null ) {
-        this.__buildExtractPath = join(BASE_BUILDS_FOLDER, this._typeFolder, this._buildNumber)
-      }
-
-      return this.__buildExtractPath
+    /* alias */
+    extractSource(artifact) {
+      return this.downloadOutput(artifact)
     },
 
-    _genericExtractPath(artifact) {
-      const extractFolder = `${ artifact + this._artifactSuffix }`
-
-      return join(this._buildExtractPath, extractFolder)
-    },
-    get pdiExtractLocation() {
-      return this._genericExtractPath(PDI_ARTIFACT)
-    },
-    get serverExtractLocation() {
-      return this._genericExtractPath(SERVER_ARTIFACT)
-    },
-    get serverPluginExtractLocation() {
-      return join(this._genericExtractPath(SERVER_ARTIFACT), SERVER_PLUGINS_FOLDER)
-    },
+    extractOutput(artifact, subFolder = '') {
+      return this.join(extractPath, this._artifactBuildFolder(artifact), subFolder)
+    }
   }
 
 }
 
-export default utils
+export default SetupBuildUtils(options)

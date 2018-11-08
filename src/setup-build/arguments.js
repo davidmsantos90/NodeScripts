@@ -25,6 +25,9 @@ const optionsConfiguration = [
   }, {
     name: 'path', alias: 'p', defaultValue: defaults.path,
     description: 'Full path to the directory where to setup all builds.',
+  }, {
+    name: 'link', alias: 'l', defaultValue: defaults.link,
+    description: 'Base url to download builds to setup.',
   }
 ]
 
