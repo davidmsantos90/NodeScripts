@@ -45,8 +45,10 @@ export const pdiExtract = () => {
   })
 
   return Promise.all([
-    extractPdi
+    extractPdi()
   ]).then(() => {
+    newline()
+
     echo(`[INFO] Cleaning up '${ setupUtils.pdiExtractLocation }' folder.`)
     // enable debug, ssh, karaf config? to user local maven repo, more...
 

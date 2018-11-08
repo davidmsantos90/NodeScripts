@@ -7,9 +7,12 @@ const optionsConfiguration = [
   {
     name: 'help', alias: 'h', type: Boolean,
     description: 'Help'
-  },{
+  }, {
     name: 'debug', alias: 'd', type: Boolean, defaultValue: defaults.debug,
     description: 'Debug mode, only logs information'
+  }, {
+    name: 'execution', alias: 'e', defaultValue: defaults.execution,
+    description: 'Which execution to run: [server, pdi]'
   }, {
     name: 'type', alias: 't', defaultValue: defaults.type,
     description: 'Build type to setup: [snapshot, qat, release]',

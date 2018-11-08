@@ -9,7 +9,7 @@ const SNAPSHOT = 'SNAPSHOT'
 const QAT = 'QAT'
 
 const SERVER_ARTIFACT = 'pentaho-server-ee'
-const PDI_ARTIFACT = 'pdi-client-ee'
+const PDI_ARTIFACT = 'pdi-ee-client'
 const ANALYZER_ARTIFACT = 'paz-plugin-ee'
 
 

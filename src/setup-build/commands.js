@@ -11,8 +11,6 @@ const execSettings = {
 const isDebug = options.debug
 
 export const download = ({ link, destination }) => new Promise((resolve, reject) => {
-  const command = `wget -q -O ${ destination } ${ link }`
-
   if (isDebug) {
     const debugMessage =`[DEBUG] Download Link: ${ link }\n[DEBUG] Download Destination: ${ destination }`
 
@@ -30,21 +28,24 @@ export const download = ({ link, destination }) => new Promise((resolve, reject)
 
     echo(`[INFO] Downloading '${ link }'`)
 
-    exec(command, execSettings, (code, output, error) => {
-      const hasError = error != null && error !== ""
-      if (hasError) {
-        return reject(error)
+    const command = `wget -q -O ${ destination } ${ link }`
+    exec(command, execSettings, (code/*, output, error*/) => {
+      const isErrorCode = code !== 0
+      if (isErrorCode) {
+        return reject(`[ERROR] Something went wrong downloading '${ link }!`)
       }
 
       resolve(`[INFO] Downloaded to '${ destination }'`)
     })
   })
 
-}).then((message) => echo(message))
+}).then((message) => echo(message)).catch((error) => {
+  echo(error)
+
+  rm('-rf', destination)
+})
 
 export const extract = ({ source, destination, pluginName }) => new Promise((resolve, reject) => {
-  const command = `unzip -q ${ source } -d ${ destination }`
-
   if (isDebug) {
     const debugMessage = `[DEBUG] Extract Source: ${ source }\n[DEBUG] Extract Destination: ${ destination }`
 
@@ -63,14 +64,21 @@ export const extract = ({ source, destination, pluginName }) => new Promise((res
 
     echo(`[INFO] Extracting '${ zipFile }'`)
 
-    exec(command, execSettings, (code, output, error) => {
-      const hasError = error != null && error !== ""
-      if (hasError) {
-        return reject(error)
+    const command = `unzip -q ${ source } -d ${ destination }`
+    exec(command, execSettings, (code/*, output, error*/) => {
+      const isErrorCode = code !== 0
+      if (isErrorCode) {
+        return reject(`[ERROR] Something went wrong extracting '${ zipFile }!`)
       }
 
       resolve(`[INFO] Extracted '${ zipFile }' to '${ destination }'`)
     })
   })
 
-}).then((message) => echo(message))
+}).then((message) => echo(message)).catch((error) => {
+  echo(error)
+
+  const location = join(destination, pluginName != null ? pluginName : '')
+
+  rm('-rf', location)
+})
