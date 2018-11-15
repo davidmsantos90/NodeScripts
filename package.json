@@ -3,7 +3,7 @@
     "clean-karaf": "dist/clean-karaf/index.js",
     "setup-build": "dist/setup-build/index.js",
     "kill-pentaho-server": "dist/kill-pentaho-server.js",
-    "start-pentaho-server": "dist/start-pentaho-server.js",
+    "start-pentaho-server": "dist/start-pentaho-server/index.js",
     "mvn-turbo": "dist/mvn-turbo.js"
   },
   "scripts": {

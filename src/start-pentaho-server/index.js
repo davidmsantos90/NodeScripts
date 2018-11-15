@@ -4,7 +4,7 @@ import { exec, echo, rm } from 'shelljs'
 
 echo('\n')
 
-exec('clean-karaf -r ./pentaho-solutions/')
+exec('clean-karaf -p ./pentaho-solutions/')
 
 // rm('-f', 'promptuser.*')
 
