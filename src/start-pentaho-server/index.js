@@ -2,20 +2,21 @@
 
 import { exec, echo, rm } from 'shelljs'
 
-echo('\n')
+const __promiseExec = (command, settings) => new Promise((resolve, reject) => {
+  exec(command, settings, (code/*, output, error*/) => {
+    const isErrorCode = code !== 0
 
-exec('clean-karaf -p ./pentaho-solutions/')
+    return isErrorCode ? reject() : resolve()
+  })
+})
 
-// rm('-f', 'promptuser.*')
-
-echo('\n')
-
-exec('kill-pentaho-server')
-
-echo('\n')
-
-exec('./start-pentaho-debug.sh')
-
-echo('\n')
-
-// shell.exec("read -rp $'Press any key to continue...\n' -n1 key")
+Promise.all([
+  __promiseExec('clean-karaf -p ./pentaho-solutions/'),
+  __promiseExec('kill-pentaho-server')
+])
+.then(() => rm('-f', 'promptuser.*'))
+.then(() => setTimeout(() => {
+  __promiseExec('./start-pentaho-debug.sh', { silent: true })
+     .then(() => echo('[INFO] Pentaho Server is starting...'))
+}, 500))
+// .then(() => exec('multitail -cSI apache tomcat/logs/catalina.out'))

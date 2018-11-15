@@ -12,9 +12,10 @@ exec('ps T', { silent }, (code, output) => {
 		.map(trimmed => trimmed.split(/\s+/).shift())
 
   if (java_PID != null) {
-    echo(`Kill pentaho-server process: #${java_PID}`)
-    exec(`kill -9 ${java_PID}`)
+    echo(`[INFO] Force shutdown of Pentaho Server process: #${ java_PID }\n`)
+
+    exec(`kill -9 ${ java_PID }`)
   } else {
-    echo(`No pentaho-server process to kill`)
+    echo(`[WARNING] No Pentaho Server process to shutdown!\n`)
   }
 })
