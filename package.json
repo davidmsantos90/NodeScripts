@@ -2,9 +2,9 @@
   "bin": {
     "clean-karaf": "dist/clean-karaf/index.js",
     "setup-build": "dist/setup-build/index.js",
-    "kill-pentaho-server": "dist/kill-pentaho-server/index.js",
-    "start-pentaho-server": "dist/start-pentaho-server/index.js",
-    "mvn-turbo": "dist/mvn-turbo/index.js"
+    "pentaho-server": "dist/pentaho-server/index.js",
+    "mvn-turbo": "dist/mvn-turbo/index.js",
+    "java-version": "dist/java-version/index.js"
   },
   "scripts": {
     "postinstall": "npx babel src -d dist --copy-files"

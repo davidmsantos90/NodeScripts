@@ -9,10 +9,10 @@ const clearCache = () => {
   if (cleanKarafUtils.isKarafCacheCreated) {
     rm('-rf', cleanKarafUtils.karafCacheFolder)
 
-    return echo('[INFO] Karaf cache was deleted!\n')
+    return echo('[INFO] Karaf cache was deleted!')
   }
 
-  echo('[INFO] Karaf cache already deleted!\n')
+  echo('[INFO] Karaf cache already deleted!')
 }
 
 const restore = () => {
@@ -22,7 +22,7 @@ const restore = () => {
     return
   }
 
-  echo('[INFO] Preparing to restore services:')
+  echo('\n[INFO] Preparing to restore services:')
 
   const bundlesToRestore = bundleList.filter((bundleID) => {
     const isStored = cleanKarafUtils.isBundleStored(bundleID)
@@ -47,7 +47,7 @@ const store = () => {
     return
   }
 
-  echo('[INFO] Preparing to store services:')
+  echo('\n[INFO] Preparing to store services:')
 
   const bundlesToStore = bundleList.filter((bundleID) => {
     const isRestored = cleanKarafUtils.isBundleRestored(bundleID)
