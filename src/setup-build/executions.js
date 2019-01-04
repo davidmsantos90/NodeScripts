@@ -28,15 +28,9 @@ const readWriteFile = ({ file, placeholder, valueToReplace }) => new Promise((re
     if (error) return reject(error)
 
     const newData = updateData(data);
-    if (newData === data) {
-      return resolve()
-    }
+    if (newData === data) return resolve()
 
-    writeFile(file, newData, fileSettings, (error) => {
-      if (error) return reject(error)
-
-      resolve()
-    })
+    writeFile(file, newData, fileSettings, (error) => error ? reject(error) : resolve())
   })
 })
 

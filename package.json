@@ -4,10 +4,11 @@
     "setup-build": "dist/setup-build/index.js",
     "pentaho-server": "dist/pentaho-server/index.js",
     "mvn-turbo": "dist/mvn-turbo/index.js",
-    "java-version": "dist/java-version/index.js"
+    "java-version": "dist/java-version/index.js",
+    "g-it": "dist/g-it/index.js"
   },
   "scripts": {
-    "postinstall": "npx babel src -d dist --copy-files"
+    "postinstall": "npx babel src -d dist --copy-files --source-maps"
   },
   "name": "scripts",
   "version": "1.0.0",
