@@ -16,6 +16,7 @@
   "author": "David Santos <david.m.santos90@gmail.com>",
   "license": "MIT",
   "dependencies": {
+    "@babel/polyfill": "^7.2.5",
     "command-line-args": "^4.0.0",
     "command-line-usage": "^4.0.0",
     "decompress": "^4.2.0",

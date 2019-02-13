@@ -15,11 +15,12 @@ const optionsConfiguration = [
     multiple: true, defaultValue: defaults.bundles,
     description: 'Select karaf bundles to manage.'
   }, {
-    name: 'path', alias: 'p', defaultValue: defaults.path,
+    name: 'root', alias: 'r', defaultValue: defaults.root,
     description: 'Define different root path for script.'
   }, {
-    name: 'mode', alias: 'm', defaultValue: defaults.mode,
-    description: 'Choose between moving or restoring bundles.'
+    name: 'activate', alias: 'a', type: Boolean,
+    defaultValue: defaults.activate,
+    description: 'Switch execution to activate instead of storing bundles.'
   }, {
     name: 'output', alias: 'o', defaultValue: defaults.output,
     description: 'Where bundles will be stored.'
@@ -34,4 +35,4 @@ const helpConfiguration = [
 const options = commandLineArgs(optionsConfiguration)
 const help = commandLineUsage(helpConfiguration)
 
-export { options, help }
+export { options, help, defaults }
