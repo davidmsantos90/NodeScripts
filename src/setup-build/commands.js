@@ -2,32 +2,40 @@ import { join, parse, dirname, basename } from 'path'
 import { exec, echo, which, rm, mkdir } from 'shelljs'
 import { exists } from 'fs'
 
-import npmDownload from 'download'
+import { underline } from 'chalk'
+
+import { get } from '../helpers/Request'
+import logger from '../helpers/logger'
+
 import npmUnzip from 'decompress'
 
 import setupBuildUtils from './utils'
 
 export { download, extract, cleanup }
 
-const download = ({ link, destination }) => {
-  let downloadImpl = null
-  const downloadFolder = dirname(destination)
+const download = ({ link, destination }) => new Promise((resolve, reject) => {
+  if (setupBuildUtils.isDebug) {
+    logger.debug(`Download Link: ${ link }`)
+    logger.debug(`Download Destination: ${ destination }`)
 
-  const wgetInstalled = which('wget') != null
-  if (wgetInstalled) {
-    downloadImpl = () => {
-      const command = `wget -q -O ${ destination } ${ link }`
-
-      mkdir('-p', downloadFolder)
-
-      return __promiseExec(command)
-    }
-  } else {
-    downloadImpl = () => npmDownload(link, downloadFolder)
+    return resolve()
   }
 
-  return __downloadWrap(link, destination, downloadImpl)
-}
+  exists(destination, (isDownloaded) => {
+    const downloadName = basename(destination)
+
+    if (isDownloaded) {
+      logger.warn(`  > ${ downloadName } already downloaded!`)
+
+      return resolve()
+    }
+
+    return get(link, { downloadTo: destination })
+      .then(() => resolve()) // handled in get
+      .catch(() => reject()) // handled in get
+  })
+
+}).catch((message) => rm('-rf', destination))
 
 const extract = ({ source, destination, pluginName }) => {
   const unzipInstalled = which('unzip') != null
@@ -51,16 +59,23 @@ const extract = ({ source, destination, pluginName }) => {
 
 const cleanup = ({ source, actions }) => {
   if (setupBuildUtils.isDebug) {
-    const debugMessage =`[DEBUG] Cleanup Folder: ${ source }`
+    logger.debug(`Cleanup Folder: ${ source }`)
 
-    return Promise.resolve(debugMessage)
+    return Promise.resolve()
   }
 
-  echo(`[INFO] Cleaning up '${ source }' folder.`)
+  const cleanupElementId = logger.info(`  > ${ source }/ folder`)
 
   return Promise.all(actions())
-    .then(() => Promise.resolve(`[INFO] Cleanup to '${ source }' complete.`))
-    .catch(() => Promise.reject(`[ERROR] Something went wrong cleaning up '${ source }!`))
+    .then(() => {
+      logger.__write( { id: cleanupElementId, type: 'end' })
+
+      return Promise.resolve()
+    }).catch(() => {
+      logger.__write( { id: cleanupElementId, type: 'error' })
+
+      return Promise.reject()
+    })
 }
 
 const __promiseExec = (command, settings = { silent: true }) => new Promise((resolve, reject) => {
@@ -71,49 +86,12 @@ const __promiseExec = (command, settings = { silent: true }) => new Promise((res
   })
 })
 
-const __downloadWrap = (link, destination, downloadImpl) => new Promise((resolve, reject) => {
-  if (setupBuildUtils.isDebug) {
-    const debugMessage =`[DEBUG] Download Link: ${ link }\n[DEBUG] Download Destination: ${ destination }`
-
-    return resolve(debugMessage)
-  }
-
-  exists(destination, (isDownloaded) => {
-    const downloadName = basename(destination)
-
-    if (isDownloaded) {
-      return resolve(`[WARNING] File '${ downloadName }' already downloaded!`)
-    }
-
-    echo(`[INFO] Downloading '${ link }'`)
-
-    return downloadImpl()
-      .then((success) => {
-        const message = success == null
-          ? `[INFO] Downloaded to '${ destination }'`
-          : success
-
-        return resolve(message)
-      }).catch((error) => {
-        const message = error == null
-          ? `[ERROR] Something went wrong downloading '${ link }!`
-          : error
-
-        return reject(message)
-      })
-  })
-
-}).then((success) => echo(success)).catch((error) => {
-  echo(error)
-
-  rm('-rf', destination)
-})
-
 const __extractWrap = (source, destination, pluginName, extractImpl) => new Promise((resolve, reject) => {
   if (setupBuildUtils.isDebug) {
-    const debugMessage = `[DEBUG] Extract Source: ${ source }\n[DEBUG] Extract Destination: ${ destination }`
+    logger.debug(`Extract Source: ${ source }`)
+    logger.debug(`Extract Destination: ${ destination }`)
 
-    return resolve(debugMessage)
+    return resolve()
   }
 
   const location = join(destination, pluginName != null ? pluginName : '')
@@ -122,31 +100,27 @@ const __extractWrap = (source, destination, pluginName, extractImpl) => new Prom
     const { dir: zipFolder, base: zipFile } = parse(source)
 
     if (isExtracted) {
-      return resolve(`[WARNING] File '${ zipFile }' already extracted!`)
+      logger.warn(`  > ${ zipFile } already extracted!`)
+
+      return reject()
     }
 
-    echo(`[INFO] Extracting '${ zipFile }'`)
+    const extractElementId = logger.info(`  > ${ zipFile } to ${ destination }/`)
 
     return extractImpl()
-      .then((success) => {
-        const message = success == null
-          ? `[INFO] Extracted '${ zipFile }' to '${ destination }'`
-          : success
+      .then(() => {
+        logger.__write( { id: extractElementId, type: 'end' })
 
-        return resolve(message)
-      }).catch((error) => {
-        const message = error == null
-          ? `[ERROR] Something went wrong extracting '${ zipFile }!`
-          : error
+        return resolve()
+      }).catch(() => {
+        logger.__write( { id: extractElementId, type: 'error' })
 
-        return reject(message)
+        return reject()
       })
   })
 
-}).then((message) => echo(message)).catch((error) => {
-  echo(error)
+ }).catch((message) => {
+   const location = join(destination, pluginName != null ? pluginName : '')
 
-  const location = join(destination, pluginName != null ? pluginName : '')
-
-  rm('-rf', location)
-})
+   rm('-rf', location)
+ })

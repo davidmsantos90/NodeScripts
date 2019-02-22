@@ -1,10 +1,19 @@
-import { join } from 'path'
-import { existsSync } from 'fs'
+const _getLocalConfiguration = () => {
+  const filename = 'local.config'
 
-const localConfigurationFile = 'local.config'
+  let localConfiguration = null
+  try {
+    localConfiguration = require(`../${ filename }`)
+  } catch(ex) {
+    // does nothing
+  }
 
-const configLocation = `${ join(__dirname, localConfigurationFile) }.json`
-const hasLocalConfig = existsSync(configLocation)
+  if (localConfiguration == null) {
+    localConfiguration = {}
+  }
+
+  return localConfiguration
+}
 
 const DEFAULT_EXECUTION = null
 const DEFAULT_PATH = null
@@ -16,7 +25,7 @@ const DEFAULT_DEBUG = false
 
 const {
   execution, path, link, debug, type, version, build
-} = hasLocalConfig ? require(`./${ localConfigurationFile }`) : {}
+} = _getLocalConfiguration()
 
 export const defaults = {
   execution: execution != null ? execution : DEFAULT_EXECUTION,

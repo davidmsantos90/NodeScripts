@@ -1,17 +1,15 @@
-import { echo, rm } from 'shelljs'
+import { rm } from 'shelljs'
 import { readFile, writeFile } from 'fs'
+import { underline } from 'chalk'
 
+import logger from '../helpers/logger'
 import setupBuildUtils from './utils'
+
 import { download, extract, cleanup } from './commands'
 
 const SERVER_ARTIFACT = 'pentaho-server-ee'
 const PDI_ARTIFACT = 'pdi-ee-client'
 const ANALYZER_ARTIFACT = 'paz-plugin-ee'
-
-const newline = (message) => {
-  if (message != null) echo(message)
-  echo('')
-}
 
 const readWriteFile = ({ file, placeholder, valueToReplace }) => new Promise((resolve, reject) => {
   const fileSettings = { encoding: 'utf8' }
@@ -78,6 +76,8 @@ const enableLocalDevDependencies = (karafEtcFolder) => {
 // ----
 
 const pdiDownload = () => {
+  logger.info(underline(`1. Download:`))
+
   const downloadPdi = () => download({
     link: setupBuildUtils.downloadLink(PDI_ARTIFACT),
     destination: setupBuildUtils.downloadOutput(PDI_ARTIFACT)
@@ -85,10 +85,12 @@ const pdiDownload = () => {
 
   return Promise.all([
     downloadPdi()
-  ]).then(() => newline())
+  ])
 }
 
 const serverDownload = () => {
+  logger.info(underline(`1. Download:`))
+
   const downloadServer = () => download({
     link: setupBuildUtils.downloadLink(SERVER_ARTIFACT),
     destination: setupBuildUtils.downloadOutput(SERVER_ARTIFACT)
@@ -102,12 +104,15 @@ const serverDownload = () => {
   return Promise.all([
     downloadServer(),
     downloadAnalyzer()
-  ]).then(() => newline())
+  ])
 }
 
 // ---
 
 const pdiExtract = () => {
+  logger.log()
+  logger.info(underline(`2. Extract:`))
+
   const extractPdi = () => extract({
     source: setupBuildUtils.extractSource(PDI_ARTIFACT),
     destination: setupBuildUtils.extractOutput(PDI_ARTIFACT)
@@ -115,10 +120,13 @@ const pdiExtract = () => {
 
   return Promise.all([
     extractPdi()
-  ]).then(() => newline())
+  ])
 }
 
 const serverExtract = () => {
+  logger.log()
+  logger.info(underline(`2. Extract:`))
+
   const {
     base: serverOutputFolder,
     system: pentahoSystemFolder
@@ -138,12 +146,15 @@ const serverExtract = () => {
   return Promise.all([
     extractServer(),
     extractAnalyzer()
-  ]).then(() => newline())
+  ])
 }
 
 // ---
 
 const pdiCleanup = () => {
+  logger.log()
+  logger.info(underline(`3. Cleanup:`))
+
   const {
     base: pdiFolder,
     scripts: pdiDataIntegrationFolder,
@@ -161,6 +172,9 @@ const pdiCleanup = () => {
 }
 
 const serverCleanup = () => {
+  logger.log()
+  logger.info(underline(`3. Cleanup:`))
+
   const {
     base: serverFolder,
     scripts: serverPentahoServerFolder,
@@ -180,9 +194,9 @@ const serverCleanup = () => {
 // ---
 
 export const server = () => serverDownload().then(() => serverExtract()).then(() => serverCleanup())
-  .then((message) => newline(message))
-  .catch((error) => newline(error))
+  // .then((message) => logger.info(message))
+  // .catch((error) => logger.error(error))
 
 export const pdi = () => pdiDownload().then(() => pdiExtract()).then(() => pdiCleanup())
-  .then((message) => newline(message))
-  .catch((error) => newline(error))
+  // .then((message) => logger.info(message))
+  // .catch((error) => logger.error(error))

@@ -4,7 +4,7 @@ import '@babel/polyfill'
 import { echo } from 'shelljs'
 
 import { clearCache, store, activate } from './commands'
-import cleanKarafUtils from './utils/index'
+import cleanKarafUtils from './utils'
 
 if (cleanKarafUtils.isHelp) {
   echo(cleanKarafUtils.help)

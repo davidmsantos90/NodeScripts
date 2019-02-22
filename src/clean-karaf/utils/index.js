@@ -2,7 +2,7 @@ import { existsSync } from 'fs'
 import { echo } from 'shelljs'
 import { join } from 'path'
 
-import Bundle from '../Bundle/index'
+import Bundle from '../Bundle'
 import { options, help, defaults } from './arguments'
 
 const SYSTEM_FOLDER = 'system'

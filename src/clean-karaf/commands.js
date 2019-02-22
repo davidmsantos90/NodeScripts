@@ -1,7 +1,7 @@
 import { existsSync } from 'fs'
 import { rm, echo } from 'shelljs'
 
-import cleanKarafUtils from './utils/index'
+import cleanKarafUtils from './utils'
 
 export { clearCache, activate, store }
 

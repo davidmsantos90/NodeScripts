@@ -32,7 +32,7 @@ const start = () => {
 
       rm('-f', 'promptuser.*')
 
-      return __promiseExec('clean-karaf -p ./pentaho-solutions/')
+      return __promiseExec('clean-karaf -r ./pentaho-solutions/')
         .then(() => __promiseExec('./start-pentaho-debug.sh', silentExec))
         .then(() => {
           if (pentahoServerUtils.isTailMode) {
