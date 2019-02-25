@@ -1,4 +1,4 @@
-import chalk from 'chalk'
+import Element from './Element'
 import terminal from './terminal'
 
 terminal.init()
@@ -10,45 +10,26 @@ const logger = {
     return this.__write({ message })
   },
 
-  _infoTag: chalk.bold('[INFO] '),
   info(message = '') {
-    return this.__write({ message: chalk.blue(`${ this._infoTag + chalk.cyan(message) }`) })
+    return this.__write({ message, type: 'info' })
   },
 
   debug(message = '') {
-    const tag = chalk.bold('[DEBUG] ')
-
-    return this.__write({ message: chalk.blue(`${ tag + message }`) })
+    return this.__write({ message, type: 'debug' })
   },
 
   warn(message = '') {
-    const tag = chalk.bold('[WARN] ')
-
-    return this.__write({ message: chalk.yellow(`${ tag + message }`) })
+    return this.__write({ message, type: 'warn' })
   },
 
-  _errorTag: chalk.bold('[ERROR] '),
   error(message = '') {
-    return this.__write({ message: chalk.red(`${ this._errorTag + message }`) })
+    return this.__write({ message, type: 'error' })
   },
 
-  __write({ id, message = '', type = 'draw' }) {
-    id = id || `logger_${ this.__count++ }`
+  __write({ message = '', type = 'log' }) {
+    const element = new Element({ id: `logger_${ this.__count++ }`, type })
 
-    let element = terminal.get(id)
-    if (element == null) {
-      element =  {
-        draw: () => terminal.__write(message),
-        end: () => terminal.__write(chalk.green(chalk.reset(`${ message } - completed`).replace(/^\[\w+\] /, this._infoTag))),
-        error: () => terminal.__write(chalk.red(chalk.reset(message).replace(/^\[\w+\] /, this._errorTag))),
-      }
-
-      terminal.register(id, element)
-    }
-
-    terminal.draw(id, type)
-
-    return id
+    element.update({ message })
   }
 }
 

@@ -194,9 +194,7 @@ const serverCleanup = () => {
 // ---
 
 export const server = () => serverDownload().then(() => serverExtract()).then(() => serverCleanup())
-  // .then((message) => logger.info(message))
-  // .catch((error) => logger.error(error))
+  .catch(() => {})
 
 export const pdi = () => pdiDownload().then(() => pdiExtract()).then(() => pdiCleanup())
-  // .then((message) => logger.info(message))
-  // .catch((error) => logger.error(error))
+  .catch(() => {})

@@ -43,6 +43,7 @@ export default {
 
     this.iPosition = getCursorPosition()
     this._registerKeypressEvent()
+    this._startLoading()
 
     this._ready = true
   },
@@ -52,26 +53,36 @@ export default {
     this.cursorToEnd()
   },
 
-  draw(key, type = 'draw') {
-    this.cursorTo(key)
-    this.clearLine()
-
-    const { [key]: { element } } = this._registry
-
-    element[type]()
-  },
-
-  cursorTo(key) {
+  resetLine(key) {
     const { [key]: { deltaY } } = this._registry
 
     this._output.cursorTo(0, this.iPosition.y + deltaY)
+    this._output.clearLine()
   },
 
-  cursorToEnd() {
-    this._output.cursorTo(0, this.iPosition.y + this.deltaY)
+  cursorToEnd(x = 1) {
+    this._output.cursorTo(x, this.iPosition.y + this.deltaY)
   },
 
-  clearLine() {
+  _loader: null,
+  _startLoading() {
+    var h = ['|', '/', '-', '\\'];
+    var i = 0;
+
+    this._loader = setInterval(() => {
+      i = (i > 3) ? 0 : i
+      this.cursorToEnd(0)
+      this._output.clearLine()
+
+      this.__write(h[i])
+      i++;
+    }, 250);
+  },
+
+  _stopLoading() {
+    clearInterval(this._loader)
+
+    this.cursorToEnd(0)
     this._output.clearLine()
   },
 
@@ -98,8 +109,11 @@ export default {
 
   _unregisterKeypressEvent() {
     this._input.setRawMode(false)
-    this._input.off('keypress', () => {
+    this._input.off('keypress', () => {})
+  },
 
-    })
+  _exit() {
+    this._unregisterKeypressEvent()
+    this._stopLoading()
   }
 }

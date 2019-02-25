@@ -1,4 +1,6 @@
 import terminal from './terminal'
+import logger from './logger'
+
 import ProgressBar from './ProgressBar'
 
 import { mkdir } from 'shelljs'
@@ -22,14 +24,22 @@ const responseHandler = ({
   resolve, reject,
   downloadTo = join(DOWNLOAD_FOLDER, 'download.zip')
 } = {}) => (response) => {
-  const { headers: { ['content-encoding']: encoding } } = response
-
-  const filename = downloadTo.replace(/.+\/(.+)/, '$1')
-  const downloadStream = createDownloadStream({ downloadTo, encoding })
-
-  const progressBar = new ProgressBar({ id: filename, response })
-
   let downloaded = 0
+
+  const downloadStream = createDownloadStream({ downloadTo, encoding })
+  const {
+    headers: {
+      ['content-encoding']: encoding,
+      ['content-length']: contentLength
+    }
+  } = response
+
+
+  const progressBar = new ProgressBar({
+    id: downloadTo.replace(/.+\/(.+)/, '$1'),
+    total: contentLength
+  })
+
   response.on('data', (chunk) => {
     downloadStream.write(chunk, encoding)
     downloaded += chunk.length
@@ -40,12 +50,15 @@ const responseHandler = ({
   response.on('error', (error) => {
     downloadStream.destroy()
 
-    return reject(error.message)
+    progressBar.reject({ downloaded })
+
+    return reject()
   })
 
   response.on('end', () => {
     downloadStream.end()
-    progressBar.end()
+
+    progressBar.end({ downloaded: contentLength })
 
     return resolve()
   })
@@ -67,11 +80,5 @@ export const get = (url, { downloadTo = '' }) => {
     } catch(ex) {
       return reject(ex.message)
     }
-  }).then(() => {
-    for (let element of terminal.elements()) {
-      if (element instanceof ProgressBar && !element.isComplete) return
-    }
-
-    terminal._unregisterKeypressEvent()
-  })
+  }).catch((message) => logger.error(message))
 }

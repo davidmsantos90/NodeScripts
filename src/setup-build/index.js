@@ -7,6 +7,7 @@ import setupBuildUtils from './utils'
 import { server, pdi } from './executions'
 
 import logger from '../helpers/logger'
+import terminal from '../helpers/terminal'
 
 // ---
 
@@ -17,7 +18,12 @@ if (setupBuildUtils.isHelp) {
   logger.warn(`Define 'path' in the './local.config.json' or by using the '-p' option!`)
 
 } else {
-  if (setupBuildUtils.isServerMode) server().then(() => process.exit())
+  const endProcess = () => {
+    terminal._exit()
+    process.exit()
+  }
 
-  if (setupBuildUtils.isPdiMode) pdi().then(() => process.exit())
+  if (setupBuildUtils.isServerMode) server().then(endProcess).catch(endProcess)
+
+  if (setupBuildUtils.isPdiMode) pdi().then(endProcess).catch(endProcess)
 }

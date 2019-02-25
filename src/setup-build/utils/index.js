@@ -1,6 +1,7 @@
 import { join } from 'path'
 
 import { options, help } from './arguments'
+import terminal from '../../helpers/terminal'
 
 const DOWNLOAD_FOLDER = 'downloads'
 
