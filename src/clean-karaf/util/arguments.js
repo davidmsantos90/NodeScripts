@@ -5,24 +5,37 @@ import { defaults } from './default.config'
 
 const optionsConfiguration = [
   {
-    name: 'help', alias: 'h', type: Boolean,
+    name: 'help',
+    alias: 'h',
+    type: Boolean,
     description: 'Help'
   }, {
-    name: 'debug', alias: 'd', type: Boolean,
+    name: 'debug',
+    alias: 'd',
+    type: Boolean,
     description: 'Debug mode, only logs information'
   }, {
-    name: 'bundles', alias: 'b', defaultOption: true,
-    multiple: true, defaultValue: defaults.bundles,
+    name: 'bundles',
+    alias: 'b',
+    defaultOption: true,
+    multiple: true,
+    defaultValue: defaults.bundles,
     description: 'Select karaf bundles to manage.'
   }, {
-    name: 'root', alias: 'r', defaultValue: defaults.root,
+    name: 'root',
+    alias: 'r',
+    defaultValue: defaults.root,
     description: 'Define different root path for script.'
   }, {
-    name: 'activate', alias: 'a', type: Boolean,
+    name: 'activate',
+    alias: 'a',
+    type: Boolean,
     defaultValue: defaults.activate,
     description: 'Switch execution to activate instead of storing bundles.'
   }, {
-    name: 'output', alias: 'o', defaultValue: defaults.output,
+    name: 'output',
+    alias: 'o',
+    defaultValue: defaults.output,
     description: 'Where bundles will be stored.'
   }
 ]

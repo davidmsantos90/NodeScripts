@@ -1,7 +1,6 @@
 import { join } from 'path'
 
 import { options, help } from './arguments'
-import terminal from '../../helpers/terminal'
 
 const DOWNLOAD_FOLDER = 'downloads'
 
@@ -31,12 +30,12 @@ const SetupBuildUtils = ({
   const isQat = typeTag === QAT
   const isRelease = typeTag === RELEASE
 
-  const artifactSuffix =  `-${ version }${ !isRelease ? '-' + typeTag : '' }-${ build }`
-  const downloadArtifactSuffix = `-${ version }-${ isSnapshot ? typeTag : build }`
+  const artifactSuffix = `-${version}${!isRelease ? '-' + typeTag : ''}-${build}`
+  const downloadArtifactSuffix = `-${version}-${isSnapshot ? typeTag : build}`
 
   const linkVersion = isQat ? version.replace(/\.[0-9]\.[0-9]$/, '') : version
-  const urlVersionTag = `${ linkVersion }${ !isRelease ? '-' + typeTag : '' }`
-  const downloadLink = `${ link }/${ urlVersionTag }/${ build }`
+  const urlVersionTag = `${linkVersion}${!isRelease ? '-' + typeTag : ''}`
+  const downloadLink = `${link}/${urlVersionTag}/${build}`
 
   // ---
 
@@ -50,7 +49,7 @@ const SetupBuildUtils = ({
   const pdiKarafEtcFolder = join(pdiSystemFolder, KARAF_FOLDER, KARAF_ETC_FOLDER)
 
   return {
-    serverFolders(artifact) {
+    serverFolders (artifact) {
       return {
         base: this.extractOutput(artifact),
         scripts: this.extractOutput(artifact, PENTAHO_SERVER_FOLDER),
@@ -59,7 +58,7 @@ const SetupBuildUtils = ({
       }
     },
 
-    pdiFolders(artifact) {
+    pdiFolders (artifact) {
       return {
         base: this.extractOutput(artifact),
         scripts: this.extractOutput(artifact, DATA_INTEGRATION_FOLDER),
@@ -68,64 +67,67 @@ const SetupBuildUtils = ({
       }
     },
 
-    join(...paths) {
+    join (...paths) {
       return join(...paths)
     },
 
-    get isHelp() {
+    get isHelp () {
       return _isHelp
     },
 
-    get isDebug() {
+    get isDebug () {
       return _isDebug
     },
 
-    get isBaseFolderDefined() {
+    get isBaseFolderDefined () {
       return path != null
     },
 
-    get help() {
+    get isBaseLinkDefined () {
+      return link != null
+    },
+
+    get help () {
       return help
     },
 
-    get isServerMode() {
+    get isServerMode () {
       return _execution === SERVER_EXEC
     },
 
-    get isPdiMode() {
+    get isPdiMode () {
       return _execution === PDI_EXEC
     },
 
-    _downloadBuildName(artifact) {
-      return `${ artifact + downloadArtifactSuffix }.zip`
+    _downloadBuildName (artifact) {
+      return `${artifact + downloadArtifactSuffix}.zip`
     },
 
-    _artifactBuildFolder(artifact) {
-      return `${ artifact + artifactSuffix }`
+    _artifactBuildFolder (artifact) {
+      return `${artifact + artifactSuffix}`
     },
 
-    _artifactBuildZip(artifact) {
-      return `${ this._artifactBuildFolder(artifact) }.zip`
+    _artifactBuildZip (artifact) {
+      return `${this._artifactBuildFolder(artifact)}.zip`
     },
 
-    downloadLink(artifact) {
-      return `${ downloadLink }/${ this._downloadBuildName(artifact) }`
+    downloadLink (artifact) {
+      return `${downloadLink}/${this._downloadBuildName(artifact)}`
     },
 
-    downloadOutput(artifact) {
+    downloadOutput (artifact) {
       return this.join(downloadPath, this._artifactBuildZip(artifact))
     },
 
     /* alias */
-    extractSource(artifact) {
+    extractSource (artifact) {
       return this.downloadOutput(artifact)
     },
 
-    extractOutput(artifact, subFolder = '') {
+    extractOutput (artifact, subFolder = '') {
       return this.join(extractPath, this._artifactBuildFolder(artifact), subFolder)
     }
   }
-
 }
 
 export default SetupBuildUtils(options)

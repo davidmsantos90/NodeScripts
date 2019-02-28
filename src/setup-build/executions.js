@@ -3,7 +3,7 @@ import { readFile, writeFile } from 'fs'
 import { underline } from 'chalk'
 
 import logger from '../helpers/logger'
-import setupBuildUtils from './utils'
+import setupBuildUtils from './util/index'
 
 import { download, extract, cleanup } from './commands'
 
@@ -25,7 +25,7 @@ const readWriteFile = ({ file, placeholder, valueToReplace }) => new Promise((re
   readFile(file, fileSettings, (error, data) => {
     if (error) return reject(error)
 
-    const newData = updateData(data);
+    const newData = updateData(data)
     if (newData === data) return resolve()
 
     writeFile(file, newData, fileSettings, (error) => error ? reject(error) : resolve())
@@ -46,7 +46,7 @@ const enableSpoonDebug = (dataIntegrationFolder) => {
   const placeholder = '# optional line for attaching a debugger'
 
   const debugSpoon = 'OPT="$OPT -Xdebug -Xnoagent -Djava.compiler=NONE -Xrunjdwp:transport=dt_socket,server=y,suspend=n,address=5005"'
-  const valueToReplace = `${ placeholder }\n${ debugSpoon }`
+  const valueToReplace = `${placeholder}\n${debugSpoon}`
 
   return readWriteFile({ file, placeholder, valueToReplace })
 }
@@ -57,7 +57,7 @@ const enableKarafFeatures = (karafEtcFolder) => {
   const placeholder = 'featuresBoot='
 
   const featuresToAdd = 'ssh,pentaho-marketplace,'
-  const valueToReplace = `${ placeholder + featuresToAdd}`
+  const valueToReplace = `${placeholder + featuresToAdd}`
 
   return readWriteFile({ file, placeholder, valueToReplace })
 }
@@ -68,7 +68,7 @@ const enableLocalDevDependencies = (karafEtcFolder) => {
   const placeholder = 'org.ops4j.pax.url.mvn.localRepository='
 
   const commentToEnable = '# '
-  const valueToReplace = `${ commentToEnable + placeholder }`
+  const valueToReplace = `${commentToEnable + placeholder}`
 
   return readWriteFile({ file, placeholder, valueToReplace })
 }

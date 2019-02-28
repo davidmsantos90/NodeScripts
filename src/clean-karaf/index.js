@@ -3,17 +3,16 @@
 import '@babel/polyfill'
 import { echo } from 'shelljs'
 
-import { clearCache, store, activate } from './commands'
-import cleanKarafUtils from './utils'
+import cleanKarafCmds from './commands'
+import cleanKarafUtils from './util/index'
 
 if (cleanKarafUtils.isHelp) {
   echo(cleanKarafUtils.help)
 } else {
   if (cleanKarafUtils.isDebug) echo(`[DEBUG] Starting execution of clean-karaf...`)
 
-  clearCache()
+  cleanKarafCmds.clearCache()
 
-  if (cleanKarafUtils.isActivateMode) activate()
-  else store()
-
+  if (cleanKarafUtils.isActivateMode) cleanKarafCmds.activate()
+  else cleanKarafCmds.store()
 }

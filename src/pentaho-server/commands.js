@@ -1,67 +1,64 @@
+import { echo, rm } from 'shelljs'
 
-import { exec, echo, rm } from 'shelljs'
 import { access, watch, constants } from 'fs'
 
-import pentahoServerUtils from './utils'
+import generic from '../helpers/generic'
+import pentahoServerUtils from './util/index'
 
+const CLEAN_KARAF_CMD = `clean-karaf -r ./pentaho-solutions/`
+
+const PENTAHO_START_SH = `start-pentaho-debug.sh`
 const CATALINA_LOG = 'tomcat/logs/catalina.out'
-const START_SCRIPT = 'start-pentaho-server.sh'
 
 const STATUS_ON = 'online'
 const STATUS_OFF = 'offline'
 
-const silentExec = { silent: true }
+export default {
+  start () {
+    return _serverStatus()
+      .then(({ status, pid }) => {
+        const isOnlineStatus = status === STATUS_ON
+        if (isOnlineStatus) {
+          return `[WARNING] Pentaho Server already running!  PID: ${pid}`
+        }
 
-const __promiseExec = (command, settings) => new Promise((resolve, reject) => {
-  exec(command, settings, (code, output, error) => {
-    const isErrorCode = code !== 0
+        rm('-f', 'promptuser.*')
 
-    return isErrorCode ? reject(error) : resolve(output)
-  })
-})
+        return generic.execP(CLEAN_KARAF_CMD, { silent: false })
+          .then(() => generic.execP(`./${PENTAHO_START_SH}`))
+          .then(() => {
+            if (pentahoServerUtils.isTailMode) {
+              return _tail()
+            }
 
-export { start, stop, restart }
+            return '[INFO] Pentaho Server is starting...'
+          })
+      })
+      .then((message) => echo(message))
+  },
 
-const start = () => {
-  return _serverStatus()
-    .then(({ status, pid }) => {
-      const isOnlineStatus = status === STATUS_ON
-      if (isOnlineStatus) {
-        return `[WARNING] Pentaho Server already running!  PID: ${ pid }`
-      }
+  stop () {
+    return _serverStatus()
+      .then(({ status, pid }) => {
+        const isOfflineStatus = status === STATUS_OFF
+        if (isOfflineStatus) {
+          return `[WARNING] No Pentaho Server process to shutdown!`
+        }
 
-      rm('-f', 'promptuser.*')
+        return generic.execP(`kill -9 ${pid}`, { silent: false })
+          .then(() => `[INFO] Force shutdown of Pentaho Server. PID: ${pid}`)
+      })
+      .then((message) => echo(message))
+  },
 
-      return __promiseExec('clean-karaf -r ./pentaho-solutions/')
-        .then(() => __promiseExec('./start-pentaho-debug.sh', silentExec))
-        .then(() => {
-          if (pentahoServerUtils.isTailMode) {
-            return _tail()
-          }
-
-          return '[INFO] Pentaho Server is starting...'
-        })
-    })
-    .then((message) => echo(message))
+  restart () {
+    return this.stop()
+      .then(() => __wait())
+      .then(() => this.start())
+  }
 }
 
-const stop = () => {
-  return _serverStatus()
-    .then(({ status, pid }) => {
-      const isOfflineStatus = status === STATUS_OFF
-      if (isOfflineStatus) {
-        return `[WARNING] No Pentaho Server process to shutdown!`
-      }
-
-      return __promiseExec(`kill -9 ${ pid }`)
-        .then(() => `[INFO] Force shutdown of Pentaho Server. PID: ${ pid }`)
-    })
-    .then((message) => echo(message))
-}
-
-const restart = () => {
-  return stop().then(() => __wait()).then(() => start())
-}
+// --- Private ---
 
 const _serverStatus = () => {
   return __pentahoServerPID().then((pid) => {
@@ -72,20 +69,20 @@ const _serverStatus = () => {
   })
 }
 
-const _tail = (filename  = CATALINA_LOG) => {
-  return __waitForFile(filename).then(() => __promiseExec(`tail -f ${ filename }`))
+const _tail = (filename = CATALINA_LOG) => {
+  return __waitForFile(filename).then(() => generic.execP(`tail -f ${filename}`, { silent: false }))
 }
 
 const __pentahoServerPID = () => {
-  return __promiseExec('ps T', silentExec).then((output) => {
-    const [/* ignore first element */, ...lines] = output.split('\n')
+  return generic.execP('ps T').then((output) => {
+    const [, ...lines] = output.split('\n')
 
-    const [ java_PID ] = lines
-  		.filter(info => info.includes('java'))
-  		.map(java => java.trim())
-  		.map(trimmed => trimmed.split(/\s+/).shift())
+    const [javaPId] = lines
+      .filter(info => info.includes('java'))
+      .map(java => java.trim())
+      .map(trimmed => trimmed.split(/\s+/).shift())
 
-    return java_PID
+    return javaPId
   })
 }
 
@@ -104,9 +101,9 @@ const __waitForFile = (filename, timeout = 5000) => {
     })
 
     const timer = setTimeout(() => {
-      watcher.close();
-      reject(new Error('File did not exists and was not created during the timeout.'));
-    }, timeout);
+      watcher.close()
+      reject(new Error('File did not exists and was not created during the timeout.'))
+    }, timeout)
 
     access(filename, constants.R_OK, (error) => {
       if (!error) {

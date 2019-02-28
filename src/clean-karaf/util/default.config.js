@@ -1,18 +1,12 @@
 import { pwd } from 'shelljs'
 
-const DEFAULT_ROOT = pwd().toString()
-const DEFAULT_BUNDLES = []
-const DEFAULT_DEBUG = false
-const DEFAULT_ACTIVATE = false
-const DEFAULT_OUTPUT =  '.store'
-
 const _getLocalConfiguration = () => {
   const filename = 'local.config'
 
   let localConfiguration = null
   try {
-    localConfiguration = require(`../${ filename }`)
-  } catch(ex) {
+    localConfiguration = require(`../${filename}`)
+  } catch (ex) {
     // does nothing
   }
 
@@ -22,6 +16,12 @@ const _getLocalConfiguration = () => {
 
   return localConfiguration
 }
+
+const DEFAULT_ROOT = pwd().toString()
+const DEFAULT_BUNDLES = []
+const DEFAULT_DEBUG = false
+const DEFAULT_ACTIVATE = false
+const DEFAULT_OUTPUT = '.store'
 
 const {
   root, activate, output, bundles, debug, karafBundles

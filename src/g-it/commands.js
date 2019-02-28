@@ -1,10 +1,7 @@
-import { exec } from 'shelljs'
-
-import gitUtils from './utils'
-
+import generic from '../helpers/generic'
+import gitUtils from './util/index'
 
 // Pentaho Millennuium Falcon - 1858852
-
 
 // List org teams - https://api.github.com/orgs/pentaho/teams
 
@@ -12,25 +9,14 @@ import gitUtils from './utils'
 
 export { listAllRepositories }
 
-const silentExec = { silent: true }
-
-const __promiseExec = (command, settings) => new Promise((resolve, reject) => {
-  exec(command, settings, (code, output, error) => {
-    const isErrorCode = code !== 0
-
-    return isErrorCode ? reject(error) : resolve(output)
-  })
-})
-
-
 // List org repos - https://api.github.com/orgs/pentaho/repos
 const listAllRepositories = () => {
   const repositories = []
 
-  const _parseRepositories = (url) => __promiseExec(url, silentExec).then((output) => {
+  const _parseRepositories = (url) => generic.execP(url).then((output) => {
     const repos = JSON.parse(output)
 
-    for(let index = 0, R = repos.length; index < R; index++) {
+    for (let index = 0, R = repos.length; index < R; index++) {
       const {
         id, name, full_name: fullName,
         fork: isFork, archived: isArchived, private: isPrivate,

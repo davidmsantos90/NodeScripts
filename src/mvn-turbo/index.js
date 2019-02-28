@@ -2,6 +2,11 @@
 
 import { exec } from 'shelljs'
 
-const [/*first*/, /*second*/, ...args] = process.argv
+const SKIP_TESTS = '-DskipTests=true'
+const SKIP_OPTIMIZE = '-Drequirejs.optimize.skip=true'
 
-exec(`mvn ${args.join(' ')} -DskipTests=true -Drequirejs.optimize.skip=true clean install`)
+const [,, ...args] = process.argv
+
+const mvnOptions = [...args, SKIP_TESTS, SKIP_OPTIMIZE]
+
+exec(`mvn clean install ${mvnOptions.join(' ')}`)

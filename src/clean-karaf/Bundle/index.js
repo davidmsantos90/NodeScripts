@@ -4,7 +4,7 @@ import { join } from 'path'
 
 const mapToPath = (array, path) => array.map((folder) => join(path, folder))
 
-export default function Bundle({
+export default function Bundle ({
   id = 'undefined',
   karafPath = '/',
   storePath = '.store',
@@ -16,11 +16,11 @@ export default function Bundle({
   // -----
 
   Object.assign(this, {
-    get id() {
+    get id () {
       return id
     },
 
-    get isActive() {
+    get isActive () {
       for (let folder of karafFolders) {
         if (!existsSync(folder)) return false
       }
@@ -28,7 +28,7 @@ export default function Bundle({
       return true
     },
 
-    get isStored() {
+    get isStored () {
       for (let folder of storeFolders) {
         if (!existsSync(folder)) return false
       }
@@ -36,7 +36,7 @@ export default function Bundle({
       return true
     },
 
-    __move(origin = [], destination = []) {
+    __move (origin = [], destination = []) {
       // assert arrays with same length
 
       for (let index = 0, L = origin.length; index < L; index++) {
@@ -51,16 +51,16 @@ export default function Bundle({
       }
     },
 
-    activate() {
+    activate () {
       this.__move(storeFolders, karafFolders)
 
-      echo(`[INFO]  - '${ this.id }' was activated!`)
+      echo(`[INFO]  - '${this.id}' was activated!`)
     },
 
-    store() {
+    store () {
       this.__move(karafFolders, storeFolders)
 
-      echo(`[INFO]  - '${ this.id }' was stored!`)
+      echo(`[INFO]  - '${this.id}' was stored!`)
     }
   })
 }

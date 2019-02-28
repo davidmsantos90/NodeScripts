@@ -1,133 +1,55 @@
-import { join, parse, dirname, basename } from 'path'
-import { exec, echo, which, rm, mkdir } from 'shelljs'
-import { exists } from 'fs'
-
-import { underline } from 'chalk'
+import { join, parse } from 'path'
 
 import Element from '../helpers/Element'
-import { get } from '../helpers/Request'
 import logger from '../helpers/logger'
 
-import npmUnzip from 'decompress'
+import generic from '../helpers/generic'
+import request from '../helpers/request'
+import zip from '../helpers/zip'
 
-import setupBuildUtils from './utils'
+const download = ({ link, destination }) => {
+  const { base: file } = parse(destination)
 
-export { download, extract, cleanup }
+  return generic.exists(destination)
+    .then((isDownloaded) => {
+      if (isDownloaded) {
+        return logger.warn(` > ${file} already downloaded!`)
+      }
 
-const download = ({ link, destination }) => new Promise((resolve, reject) => {
-  if (setupBuildUtils.isDebug) {
-    logger.debug(`Download Link: ${ link }`)
-    logger.debug(`Download Destination: ${ destination }`)
-
-    return resolve()
-  }
-
-  exists(destination, (isDownloaded) => {
-    const downloadName = basename(destination)
-
-    if (isDownloaded) {
-      logger.warn(` > ${ downloadName } already downloaded!`)
-
-      return resolve()
-    }
-
-    return get(link, { downloadTo: destination })
-      .then(() => resolve()) // handled in get
-      .catch(() => {
-        rm('-rf', destination)
-
-        return reject()
+      return request.get(link, {
+        downloadPath: destination
       })
-  })
-})
-
-const extract = ({ source, destination, pluginName }) => {
-  const unzipInstalled = which('unzip') != null
-
-  let extractImpl = null
-  if (unzipInstalled) {
-    extractImpl = () => {
-      mkdir('-p', destination)
-
-      const command = `unzip -q ${ source } -d ${ destination }`
-
-      return __promiseExec(command)
-    }
-  } else {
-    extractImpl = () => npmUnzip(source, destination)
-      .then(() => undefined/* silent npmUnzip execution */)
-  }
-
-  return __extractWrap(source, destination, pluginName, extractImpl)
-}
-
-const cleanup = ({ source, actions }) => {
-  const cleanupElement = new Element({ id: `cleanup_${ source }`})
-
-  if (setupBuildUtils.isDebug) {
-    cleanupElement.update({ message: `Cleanup Folder: ${ source }`, type: 'debug' })
-
-    return Promise.resolve()
-  }
-
-  cleanupElement.update({ message: ` > ${ source }/ folder`, type: 'info' })
-
-  return Promise.all(actions())
-    .then(() => {
-      cleanupElement.end()
-
-      return Promise.resolve()
-    }).catch(() => {
-      cleanupElement.reject()
-
-      return Promise.reject()
     })
 }
 
-const __promiseExec = (command, settings = { silent: true }) => new Promise((resolve, reject) => {
-  exec(command, settings, (code/*, output, error*/) => {
-    const isErrorCode = code !== 0
+const extract = ({ source, destination, pluginName = '' }) => {
+  const extractedFolder = join(destination, pluginName)
 
-    return isErrorCode ? reject() : resolve()
-  })
-})
+  return generic.exists(extractedFolder)
+    .then((isExtracted) => {
+      if (isExtracted) {
+        const { base: zipFile } = parse(source)
 
-const __extractWrap = (source, destination, pluginName, extractImpl) => new Promise((resolve, reject) => {
-  const extractElement = new Element({ id: `extract_${ source }`})
+        return logger.warn(` > ${zipFile} already extracted!`)
+      }
 
-  if (setupBuildUtils.isDebug) {
-    logger.debug(`Extract Source: ${ source }`)
-    logger.debug(`Extract Destination: ${ destination }`)
-
-    return resolve()
-  }
-
-  const location = join(destination, pluginName != null ? pluginName : '')
-
-  exists(location, (isExtracted) => {
-    const { dir: zipFolder, base: zipFile } = parse(source)
-
-    if (isExtracted) {
-      extractElement.update({ message: ` > ${ zipFile } already extracted!`, type: 'warn' })
-
-      return reject()
-    }
-
-    extractElement.update({ message: ` > ${ zipFile } to ${ destination }/`, type: 'info' })
-
-    return extractImpl()
-      .then(() => {
-        extractElement.end()
-
-        return resolve()
-      }).catch((error) => {
-        logger.debug(error && error.message)
-        extractElement.reject()
-
-        const location = join(destination, pluginName != null ? pluginName : '')
-        rm('-rf', location)
-
-        return reject()
+      return zip.extract({
+        source, destination, extractedFolder
       })
+    })
+}
+
+const cleanup = ({ source, actions }) => {
+  const cleanupElement = new Element({ id: `cleanup_${source}` })
+
+  cleanupElement.update({
+    type: 'info',
+    message: ` > ${source}/ folder`
   })
- })
+
+  return Promise.all(actions())
+    .then(() => cleanupElement.end())
+    .catch(() => cleanupElement.reject())
+}
+
+export { download, extract, cleanup }

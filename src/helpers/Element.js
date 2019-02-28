@@ -3,7 +3,7 @@ import chalk from 'chalk'
 import terminal from './terminal'
 
 export default class Element {
-  constructor({
+  constructor ({
     id, type
   }) {
     this._id = id
@@ -17,38 +17,48 @@ export default class Element {
 
   // -----
 
-  get id() {
+  get id () {
     return this._id
   }
 
-  get isDone() {
+  get isDone () {
     return this.__isDone
   }
 
-  end(options = {}) {
+  end (options = {}) {
     this.__isDone = true
 
     this.update(options)
+
+    return Promise.resolve()
   }
 
-  get isRejected() {
+  get isRejected () {
     return this.__isRejected
   }
 
-  reject(options = {}) {
+  reject (options = {}) {
     this.__isRejected = true
 
     this.update(options)
+
+    return Promise.reject(this.__error)
   }
 
-  update({ message, type }) {
+  get __error () {
+    const message = `Element ${this.id} was rejected!`
+
+    return new Error(message)
+  }
+
+  update ({ message, type }) {
     if (message != null) this._message = message
-    if (type != null ) this._type = type
+    if (type != null) this._type = type
 
     this.draw()
   }
 
-  draw() {
+  draw () {
     terminal.resetLine(this.id)
 
     if (this.isRejected || this._type === 'error') return this._error()
@@ -61,47 +71,47 @@ export default class Element {
     terminal.__write(this._message)
   }
 
-  _debug() {
+  _debug () {
     const tag = chalk.bold('[DEBUG] ')
 
-    terminal.__write(chalk.blue(`${ tag + chalk.cyan(this._message) }`))
+    terminal.__write(chalk.blue(`${tag + chalk.cyan(this._message)}`))
   }
 
-  _info() {
+  _info () {
     const tag = chalk.bold('[INFO]  ')
 
-    terminal.__write(chalk.blue(`${ tag + chalk.cyan(this._message) }`))
+    terminal.__write(chalk.blue(`${tag + chalk.cyan(this._message)}`))
   }
 
-  _done() {
+  _done () {
     const tag = chalk.bold('[DONE]  ')
 
     terminal.__write(chalk.green(tag + this._message))
   }
 
-  _warn() {
+  _warn () {
     const tag = chalk.bold('[WARN]  ')
 
     terminal.__write(chalk.yellow(tag + this._message))
   }
 
-  _error() {
+  _error () {
     const tag = chalk.bold('[ERROR] ')
 
     terminal.__write(chalk.red(tag + this._message))
   }
 
-  _padL(value, pad = '0', target = 2) {
+  _padL (value, pad = '0', target = 2) {
     const valueLength = String(value).length
     const padding = valueLength < target ? pad.repeat(target - valueLength) : ''
 
-    return `${ padding + value }`
+    return `${padding + value}`
   }
 
-  _padR(value, pad = '0', target = 2) {
+  _padR (value, pad = '0', target = 2) {
     const valueLength = String(value).length
     const padding = valueLength < target ? pad.repeat(target - valueLength) : ''
 
-    return `${ value + padding }`
+    return `${value + padding}`
   }
 }
