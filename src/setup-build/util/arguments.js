@@ -18,13 +18,14 @@ const optionsConfiguration = [
   }, {
     name: 'execution',
     alias: 'e',
+    defaultOption: true,
     defaultValue: defaults.execution,
-    description: 'Which execution to run: [server, pdi]'
+    description: 'Which execution to run:\n - server, pdi'
   }, {
     name: 'type',
     alias: 't',
     defaultValue: defaults.type,
-    description: 'Build type to setup: [snapshot, qat, release]'
+    description: 'Build type to setup:\n - snapshot, qat, release'
   }, {
     name: 'version',
     alias: 'v',
@@ -39,12 +40,12 @@ const optionsConfiguration = [
     name: 'path',
     alias: 'p',
     defaultValue: defaults.path,
-    description: 'Full path to the directory where to setup all builds.'
+    description: 'Base path where to setup all builds.\n(must be an absolute path)'
   }, {
     name: 'link',
     alias: 'l',
     defaultValue: defaults.link,
-    description: 'Base url to download builds to setup.'
+    description: 'Builds base download url'
   }
 ]
 
@@ -56,4 +57,4 @@ const helpConfiguration = [
 const options = commandLineArgs(optionsConfiguration)
 const help = commandLineUsage(helpConfiguration)
 
-export { options, help }
+export { options, help, defaults }

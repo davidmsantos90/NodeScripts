@@ -1,13 +1,28 @@
-## Start/Stop/Restart your Pentaho Server
+## Start, stop and restart a `pentaho-server` build.
 
-#### 1. Options:
-  - -h, --help: Help                                       
-  - -d, --debug: Debug mode                                 
-  - -a, --action: Select pentaho-server action to execute.   
-  - -t, --tail: Tail pentaho-server cataliga.out log file.
+### Command line options
+| *Option* | *Alias* | *Type*   | Default Option | *Description*                                             |
+|----------|---------|----------|----------------|-----------------------------------------------------------|
+| action   | a       | string   | Yes            | Select an `action` to execute:<br>- start, stop, restart. |
+| tail     | t       | boolean  | No             | Tail `cataliga.out` log file.                             |
+| help     | h       | boolean  | No             | Shows help information.                                   |
+| debug    | d       | boolean  | No             | Enables debug logging.                                    |
 
-#### 2. Installing
-  - Run `npm install` and `npm link` on the repository root folder
+### Local `pentaho-server` configuration
 
-#### 3. Execute
-  - From any location type `pentaho-server [options]`
+To avoid always having to declare the same `pentaho-server` option or simply to define option's default values:
+ - Create a file named **local.config.json** in this folder.
+   <br>(Do this before running `npm link`)
+ - Each property must match this script options.
+   <br>(the rest will be ignored)
+
+```
+Example:
+ {
+   ...
+
+   "action": "restart"
+
+   ...
+ }
+```

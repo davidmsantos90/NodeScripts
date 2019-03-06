@@ -8,24 +8,24 @@ const optionsConfiguration = [
     name: 'help',
     alias: 'h',
     type: Boolean,
-    description: 'Help'
+    description: 'Shows help information.'
   }, {
     name: 'debug',
     alias: 'd',
     type: Boolean,
-    description: 'Debug mode'
+    description: 'Enables debug logging.'
   }, {
     name: 'action',
     alias: 'a',
     defaultOption: true,
     defaultValue: defaults.action,
-    description: 'Select pentaho-server action to execute.'
+    description: 'Select an `action` to execute:\n - start, stop, restart.'
   }, {
     name: 'tail',
     alias: 't',
     type: Boolean,
     defaultValue: defaults.tail,
-    description: 'Tail pentaho-server cataliga.out log file.'
+    description: 'Tail `cataliga.out` log file.'
   }
 ]
 

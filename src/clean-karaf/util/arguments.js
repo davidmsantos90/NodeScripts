@@ -8,24 +8,24 @@ const optionsConfiguration = [
     name: 'help',
     alias: 'h',
     type: Boolean,
-    description: 'Help'
+    description: 'Shows help information.'
   }, {
     name: 'debug',
     alias: 'd',
     type: Boolean,
-    description: 'Debug mode, only logs information'
+    description: 'Enables debug logging.'
   }, {
     name: 'bundles',
     alias: 'b',
     defaultOption: true,
     multiple: true,
     defaultValue: defaults.bundles,
-    description: 'Select karaf bundles to manage.'
+    description: 'List of karaf bundles to:\n - activate, store.'
   }, {
     name: 'root',
     alias: 'r',
     defaultValue: defaults.root,
-    description: 'Define different root path for script.'
+    description: 'Define a different root path for script.\n (can be relative to current directory)'
   }, {
     name: 'activate',
     alias: 'a',
@@ -36,7 +36,7 @@ const optionsConfiguration = [
     name: 'output',
     alias: 'o',
     defaultValue: defaults.output,
-    description: 'Where bundles will be stored.'
+    description: 'Location to store karaf bundles.'
   }
 ]
 
