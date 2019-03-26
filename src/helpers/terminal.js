@@ -1,6 +1,7 @@
 import '@babel/polyfill'
 
 import { sync as getCursorPosition } from 'get-cursor-position'
+
 import readline from 'readline'
 
 export default {
@@ -16,21 +17,23 @@ export default {
   },
 
   _iPosition: null,
-  set iPosition ({ row: y, col: x }) {
+  set iPosition ({ row: y = 0, col: x = 0 } = {}) {
     this._iPosition = { x, y }
   },
   get iPosition () {
     return this._iPosition
   },
 
-  _deltaY: -1,
   get deltaY () {
-    return this._deltaY
+    return this._registryList.length
   },
 
   _registry: {},
+  _registryList: [],
   register (key, element) {
-    this._registry[key] = { element, deltaY: this._deltaY++ }
+    this._registry[key] = { element, deltaY: this.deltaY }
+
+    this._registryList.push(key)
   },
 
   get (key) {
@@ -38,7 +41,7 @@ export default {
   },
 
   elements: function * () {
-    for (let key of Object.keys(this._registry)) {
+    for (let key of this._registryList) {
       yield (this._registry[key].element)
     }
   },
@@ -55,95 +58,130 @@ export default {
     const isOutputTTY = this._output.isTTY
     if (!isInputTTY || !isOutputTTY) throw new Error(`streams must be TTY`)
 
+    // 1. Calculate initial size and cursor position
     this.size = this._output.getWindowSize()
     this.iPosition = getCursorPosition()
 
-    this._registerResizeEvent()
-    this._registerKeypressEvent()
+    // 2. Register input stream event handlers
+    readline.emitKeypressEvents(this._input)
+    this._input.setRawMode(true)
+    this._input.on('keypress', (str, key) => this._onKeypress(str, key))
 
-    // this._startLoading()
+    // 3. Register ouput stream event handlers
+    this._output.on('resize', () => this._onResize())
 
+    // 4. Terminal is ready to be used
     this._ready = true
   },
 
-  __write (value = '') {
-    this._output.write(value)
-    this.cursorToEnd()
+  write (message = '', key) {
+    return this._write({ message, key })
   },
 
-  resetLine (key) {
+  _write ({ key, x, y, message = '' }) {
+    this._cursorTo({ key, x, y })._clearLine()
+
+    this._output.write(`${message}`)
+
+    return this
+  },
+
+  cursorTo (x, y) {
+    return this._cursorTo({ x, y })
+  },
+
+  cursorToStart () {
+    const y = this.iPosition.y
+
+    return this._cursorTo({ x: 0, y })
+  },
+
+  cursorToEnd () {
+    const y = this.iPosition.y + this.deltaY
+
+    return this._cursorTo({ x: 0, y })
+  },
+
+  _cursorTo ({ x = 0, y = 0, key }) {
+    if (key != null) {
+      const position = this._elementPosition(key)
+
+      x = position.x
+      y = position.y
+    }
+
+    this._output.cursorTo(x, y)
+
+    return this
+  },
+
+  moveCursor (x, y) {
+    return this._moveCursor({ x, y })
+  },
+
+  _moveCursor ({ x = 0, y, key }) {
+    if (key != null) {
+      const position = this._elementPosition(key)
+
+      x = position.x
+      y = position.y
+    }
+
+    this._output.moveCursor(x, y)
+
+    return this
+  },
+
+  _clearLine () {
+    this._output.clearLine()
+
+    return this
+  },
+
+  _clearScreenDown () {
+    this._output.clearScreenDown()
+
+    return this
+  },
+
+  _elementPosition (key) {
     const { [key]: { deltaY } } = this._registry
 
-    this._output.cursorTo(0, this.iPosition.y + deltaY)
-    this._output.clearLine()
+    return {
+      x: 0, y: this.iPosition.y + deltaY
+    }
   },
 
-  cursorToEnd (x = 1) {
-    this._output.cursorTo(x, this.iPosition.y + this.deltaY)
+  _onKeypress (str, key) {
+    if (key.ctrl && key.name === 'c') {
+      this._exit()
+      process.exit()
+    }
   },
 
-  _loader: null,
-  _startLoading () {
-    var h = ['|', '/', '-', '\\']
-    var i = 0
+  _onResize () {
+    // 1. calculate new size
+    this.size = this._output.getWindowSize()
 
-    this._loader = setInterval(() => {
-      i = (i > 3) ? 0 : i
-      this.cursorToEnd(0)
-      this._output.clearLine()
+    // 2. clean output stream
+    this.cursorToStart()
+      .moveCursor(0, -this.deltaY)
+      ._clearScreenDown()
 
-      this.__write(h[i])
-      i++
-    }, 250)
-  },
-
-  _stopLoading () {
-    // clearInterval(this._loader)
-
-    this.cursorToEnd(0)
-    this._output.clearLine()
-  },
-
-  _registerKeypressEvent () {
-    readline.emitKeypressEvents(this._input)
-    this._input.setRawMode(true)
-
-    this._input.on('keypress', (str, key) => {
-      if (key.ctrl && key.name === 'c') {
-        this._exit()
-        process.exit()
-      }
-
-      if (key.name === 'return') {
-        this._output.cursorTo(0, this.iPosition.y)
-
-        for (let element of this.elements()) {
-          element.draw()
-        }
-
-        this.cursorToEnd()
-      }
-
-      // console.log(`Pressed: ${ key.name }`)
-    })
-  },
-
-  _unregisterKeypressEvent () {
-    this._input.setRawMode(false)
-    this._input.off('keypress', () => {})
-  },
-
-  _registerResizeEvent () {
-    this._output.on('resize', () => {
-      const beforePos = this.iPosition
-
-      this.size = this._output.getWindowSize()
-      this.iPosition = getCursorPosition() || beforePos
-    })
+    // 3. trigger all elements' resize events
+    for (let element of this.elements()) {
+      element.emit('resize')
+    }
   },
 
   _exit () {
-    this._unregisterKeypressEvent()
-    this._stopLoading()
+    this._input.setRawMode(false)
+    this._input.off('keypress', (str = '', key = {}) => this._onKeypress(str, key))
+
+    this._output.off('resize', () => this._onResize())
+
+    this.cursorToEnd()._clearLine()
+
+    return this
   }
 }

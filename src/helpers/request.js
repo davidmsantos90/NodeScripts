@@ -3,11 +3,20 @@ import '@babel/polyfill'
 import { rm } from 'shelljs'
 import ProgressBar from './ProgressBar'
 
-import { get as httpGet } from 'http'
+import {
+  get as httpGet,
+  STATUS_CODES
+} from 'http'
 import { get as httpsGet } from 'https'
 
 // import logger from './logger'
 import generic from './generic'
+
+const isSuccessfulStatus = (status) => {
+  const okStatus = STATUS_CODES[200]
+
+  return STATUS_CODES[status] === okStatus
+}
 
 const responseHandler = ({
   resolve, reject, downloadPath
@@ -15,14 +24,27 @@ const responseHandler = ({
   const {
     headers: {
       'content-encoding': encoding,
-      'content-length': contentLength
-    }
+      'content-length': total
+    },
+    statusCode
   } = response
+
+  const responseSuccess = isSuccessfulStatus(statusCode)
+
+  // logger.debug(`Enconding: ${encoding}`)
+  // logger.debug(`Status: ${statusCode}`)
+  // logger.debug(`Total: ${total}`)
 
   const progressBar = new ProgressBar({
     id: downloadPath.replace(/.+\/(.+)/, '$1'),
-    total: contentLength
+    total: responseSuccess ? total : 0
   })
+
+  if (!responseSuccess) {
+    const error = progressBar.reject()
+
+    return reject(error)
+  }
 
   const downloadStream = generic.createDownloadStream({ path: downloadPath, encoding })
 
@@ -37,23 +59,25 @@ const responseHandler = ({
   response.on('error', () => {
     downloadStream.destroy()
 
-    const error = progressBar.reject({ downloaded })
-
-    return reject(error)
+    throw new Error(progressBar.reject({ downloaded }))
   })
 
   response.on('end', () => {
     downloadStream.end()
 
-    progressBar.end({ downloaded: contentLength })
+    progressBar.end({ downloaded: total })
 
-    return resolve()
+    resolve()
   })
 }
 
 export default {
   get (url, { downloadPath = '' }) {
-    if (url == null || url === '') return Promise.resolve()
+    if (url == null || url === '') {
+      const error = `'url' parameter must be defined to make a 'get' request`
+
+      return Promise.reject(error)
+    }
 
     return new Promise((resolve, reject) => {
       try {
@@ -64,14 +88,18 @@ export default {
           resolve, reject, downloadPath
         })
 
-        getMethod(url, getMethodCallback)
+        const getOptions = {
+          headers: { 'accept-encoding': 'gzip,deflate' }
+        }
+
+        getMethod(url, getOptions, getMethodCallback)
       } catch (exception) {
         return reject(exception)
       }
+    }).catch((/* error */) => {
+      rm('-rf', downloadPath)
+    }).then((a) => {
+      return a
     })
-      .then((a) => a)
-      .catch((/* error */) => {
-        rm('-rf', downloadPath)
-      })
   }
 }

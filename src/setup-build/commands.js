@@ -18,6 +18,8 @@ const download = ({ link, destination }) => {
 
       return request.get(link, {
         downloadPath: destination
+      }).catch(() => {
+        // do nothing
       })
     })
 }
@@ -35,6 +37,8 @@ const extract = ({ source, destination, pluginName = '' }) => {
 
       return zip.extract({
         source, destination, extractedFolder
+      }).catch(() => {
+        // do nothing
       })
     })
 }

@@ -1,18 +1,42 @@
+import EventEmitter from 'events'
+
 import chalk from 'chalk'
 
 import terminal from './terminal'
 
-export default class Element {
+const DISCOUNT_LENGTH = 80
+
+const MINIMUM_LENGTH = 20
+
+export default class Element extends EventEmitter {
   constructor ({
     id, type
   }) {
+    super()
+
     this._id = id
     this._type = type
 
     this.__isDone = false
     this.__isRejected = false
 
+    this.__length = Math.max(MINIMUM_LENGTH, terminal.size.width - DISCOUNT_LENGTH)
+
+    this.__registerEvents()
+
     terminal.register(id, this)
+  }
+
+  __registerEvents () {
+    this.on('resize', () => {
+      this.__length = Math.max(MINIMUM_LENGTH, terminal.size.width - DISCOUNT_LENGTH)
+
+      this.draw()
+    })
+
+    this.on('newline', () => {
+      this.draw()
+    })
   }
 
   // -----
@@ -59,46 +83,46 @@ export default class Element {
   }
 
   draw () {
-    terminal.resetLine(this.id)
-
     if (this.isRejected || this._type === 'error') return this._error()
     if (this.isDone) return this._done()
 
-    if (this._type === 'debug') return this._debug()
-    if (this._type === 'info') return this._info()
-    if (this._type === 'warn') return this._warn()
+    let message = this._message
 
-    terminal.__write(this._message)
+    if (this._type === 'debug') message = this._debug()
+    if (this._type === 'info') message = this._info()
+    if (this._type === 'warn') message = this._warn()
+
+    terminal.write(message, this.id)
   }
 
   _debug () {
     const tag = chalk.bold('[DEBUG] ')
 
-    terminal.__write(chalk.blue(`${tag + chalk.cyan(this._message)}`))
+    return chalk.blue(`${tag + chalk.cyan(this._message)}`)
   }
 
   _info () {
     const tag = chalk.bold('[INFO]  ')
 
-    terminal.__write(chalk.blue(`${tag + chalk.cyan(this._message)}`))
+    return chalk.blue(`${tag + chalk.cyan(this._message)}`)
   }
 
   _done () {
     const tag = chalk.bold('[DONE]  ')
 
-    terminal.__write(chalk.green(tag + this._message))
+    return chalk.green(tag + this._message)
   }
 
   _warn () {
     const tag = chalk.bold('[WARN]  ')
 
-    terminal.__write(chalk.yellow(tag + this._message))
+    return chalk.yellow(tag + this._message)
   }
 
   _error () {
     const tag = chalk.bold('[ERROR] ')
 
-    terminal.__write(chalk.red(tag + this._message))
+    return chalk.red(tag + this._message)
   }
 
   _padL (value, pad = '0', target = 2) {

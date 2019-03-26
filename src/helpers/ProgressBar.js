@@ -24,8 +24,6 @@ export default class ProgressBar extends Element {
 
     this.__progress = 0
     this.__total = total
-
-    this.__length = terminal._output.columns - 80
   }
 
   init ({ total }) {
@@ -39,10 +37,17 @@ export default class ProgressBar extends Element {
   }
 
   set progress (downloaded) {
-    const progress = downloaded / this.__total
+    const total = this.__total
 
-    this.__isDone = progress === 1
-    this.__progress = progress
+    if (!total) {
+      this.__progress = 0
+      this.__isRejected = true
+    } else {
+      const progress = downloaded / total
+
+      this.__isDone = progress === 1
+      this.__progress = progress
+    }
   }
   get progress () {
     return this.__progress
@@ -65,8 +70,6 @@ export default class ProgressBar extends Element {
   }
 
   draw () {
-    terminal.resetLine(this.id)
-
     const separator = bold(' | ')
 
     let output = this._drawCaption()
@@ -74,7 +77,7 @@ export default class ProgressBar extends Element {
     output += separator + this._drawClock()
     output += separator + this._drawProgressPercentage()
 
-    terminal.__write(output)
+    terminal.write(output, this.id)
 
     this._throttle()
   }
@@ -87,6 +90,8 @@ export default class ProgressBar extends Element {
   }
 
   _throttle () {
+    if (this.__inThrottle) return
+
     this.__inThrottle = true
 
     setTimeout(() => {
