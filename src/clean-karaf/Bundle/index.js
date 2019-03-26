@@ -1,6 +1,6 @@
 import { mkdir, mv, echo } from 'shelljs'
 import { existsSync } from 'fs'
-import { join } from 'path'
+import { join, parse } from 'path'
 
 const mapToPath = (array, path) => array.map((folder) => join(path, folder))
 
@@ -45,9 +45,10 @@ export default function Bundle ({
 
         // console.log('From:', originFolder)
         // console.log('To:', destinationFolder)
+        const { dir: parentFolder } = parse(destinationFolder)
 
-        mkdir('-p', destinationFolder)
-        mv(originFolder, destinationFolder)
+        mkdir('-p', parentFolder)
+        mv(originFolder, parentFolder)
       }
     },
 
