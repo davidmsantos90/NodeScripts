@@ -1,4 +1,7 @@
-node_modules/
-dist/
+# Folders to ignore
+**/node_modules/
+**/dist/
+**/libs/
 
-local.config.json
+# Files to ignore
+**/local.config.json

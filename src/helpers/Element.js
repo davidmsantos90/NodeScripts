@@ -4,7 +4,7 @@ import chalk from 'chalk'
 
 import terminal from './terminal'
 
-const DISCOUNT_LENGTH = 80
+const DISCOUNT_LENGTH = 85
 
 const MINIMUM_LENGTH = 20
 

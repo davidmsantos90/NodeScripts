@@ -1,7 +1,7 @@
 import { existsSync } from 'fs'
 import { join } from 'path'
 
-import Bundle from '../Bundle'
+import bundles from '../bundles/index'
 
 import { options, help, defaults } from './arguments'
 
@@ -64,6 +64,8 @@ const UtilsFactory = ({
     console.log(`"storePath": ${storePath}`)
     console.log(`"cachePath": ${cachePath}`)
   }
+
+  const { Bundle } = bundles
 
   const bundleMap = createBundleMap()
   for (let id of bundleList) {

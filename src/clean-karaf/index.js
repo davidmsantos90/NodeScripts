@@ -1,18 +1,18 @@
 #! /usr/bin/env node
 
 import '@babel/polyfill'
-import { echo } from 'shelljs'
+
+import shell from '../helpers/shell'
 
 import cleanKarafCmds from './commands'
 import cleanKarafUtils from './util/index'
 
-if (cleanKarafUtils.isHelp) {
-  echo(cleanKarafUtils.help)
-} else {
-  if (cleanKarafUtils.isDebug) echo(`[DEBUG] Starting execution of clean-karaf...`)
+if (cleanKarafUtils.isHelp) shell.echo(cleanKarafUtils.help)
 
-  cleanKarafCmds.clearCache()
+else {
+  cleanKarafCmds.clearCache().then(() => {
+    if (cleanKarafUtils.isActivateMode) cleanKarafCmds.activate()
 
-  if (cleanKarafUtils.isActivateMode) cleanKarafCmds.activate()
-  else cleanKarafCmds.store()
+    else cleanKarafCmds.store()
+  })
 }

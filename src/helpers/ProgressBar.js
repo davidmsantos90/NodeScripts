@@ -100,7 +100,7 @@ export default class ProgressBar extends Element {
   }
 
   _drawCaption () {
-    const filename = this._padR(` > ${this.id}`, ' ', 45)
+    const filename = this._padR(` > ${this.id}`, ' ', 50)
 
     if (this.isDone) return greenBold('[DONE]  ') + green(filename)
 

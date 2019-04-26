@@ -1,47 +1,47 @@
-import { rm, echo } from 'shelljs'
+import shell from '../helpers/shell'
 
 import cleanKarafUtils from './util/index'
 
 export default {
-  clearCache () {
-    if (cleanKarafUtils.isDebug) echo(`[DEBUG] About to clean karaf cache...`)
+  async clearCache () {
+    if (cleanKarafUtils.isDebug) await shell.echo(`[DEBUG] About to clean karaf cache...`)
 
     if (cleanKarafUtils.cacheExists) {
-      rm('-rf', cleanKarafUtils.cachePath)
+      await shell.rm(`-rf ${cleanKarafUtils.cachePath}`)
 
-      return echo('[INFO] Karaf cache was deleted!')
+      return shell.echo('[INFO] Karaf cache was deleted!')
     }
 
-    echo('[INFO] Karaf cache already deleted!')
+    return shell.echo('[INFO] Karaf cache already deleted!')
   },
 
-  activate () {
-    if (cleanKarafUtils.isDebug) echo(`[DEBUG] About to activate some karaf bundles...`)
+  async activate () {
+    if (cleanKarafUtils.isDebug) await shell.echo(`[DEBUG] About to activate some karaf bundles...`)
 
     const bundleList = cleanKarafUtils.bundlesToActivate
-    if (!bundleList.length) return
+    if (!bundleList.length) return shell.echo('[WARN] No bundles to activate!')
 
-    echo('\n[INFO] Preparing to activate karaf bundles:')
+    await shell.echo('\n[INFO] Preparing to activate karaf bundles:')
 
     for (let bundle of bundleList) {
-      bundle.activate()
+      await bundle.activate()
     }
 
-    echo('')
+    return shell.echo('')
   },
 
-  store () {
-    if (cleanKarafUtils.isDebug) echo(`[DEBUG] About to store some karaf bundles...`)
+  async store () {
+    if (cleanKarafUtils.isDebug) await shell.echo(`[DEBUG] About to store some karaf bundles...`)
 
     const bundleList = cleanKarafUtils.bundlesToStore
-    if (!bundleList.length) return
+    if (!bundleList.length) return shell.echo('[WARN] No bundles to store!')
 
-    echo('\n[INFO] Preparing to store karaf bundles:')
+    await shell.echo('\n[INFO] Preparing to store karaf bundles:')
 
     for (let bundle of bundleList) {
-      bundle.store()
+      await bundle.store()
     }
 
-    echo('')
+    return shell.echo('')
   }
 }

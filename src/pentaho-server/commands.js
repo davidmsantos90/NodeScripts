@@ -2,7 +2,9 @@ import { echo, rm } from 'shelljs'
 
 import { access, watch, constants } from 'fs'
 
+import shell from '../helpers/shell'
 import generic from '../helpers/generic'
+
 import pentahoServerUtils from './util/index'
 
 const CLEAN_KARAF_CMD = `clean-karaf -r ./pentaho-solutions/`
@@ -13,13 +15,24 @@ const CATALINA_LOG = 'tomcat/logs/catalina.out'
 const STATUS_ON = 'online'
 const STATUS_OFF = 'offline'
 
+// mvn $@ | sed -e "s/\(\[INFO\]\ \-.*\)/${TEXT_BLUE}${BOLD}\1/g" \
+//                -e "s/\(\[INFO\]\ \[.*\)/${RESET_FORMATTING}${BOLD}\1${RESET_FORMATTING}/g" \
+//                -e "s/\(\[INFO\]\ BUILD SUCCESSFUL\)/${BOLD}${TEXT_GREEN}\1${RESET_FORMATTING}/g" \
+//                -e "s/\(\[WARNING\].*\)/${BOLD}${TEXT_YELLOW}\1${RESET_FORMATTING}/g" \
+//                -e "s/\(\[ERROR\].*\)/${BOLD}${TEXT_RED}\1${RESET_FORMATTING}/g" \
+//                -e "s/Tests run: \([^,]*\), Failures: \([^,]*\), Errors: \([^,]*\), Skipped: \([^,]*\)/${BOLD}${TEXT_GREEN}Tests run: \1${RESET_FORMATTING}, Failures: ${BOLD}${TEXT_RED}\2${RESET_FORMATTING}, Errors: ${BOLD}${TEXT_RED}\3${RESET_FORMATTING}, Skipped: ${BOLD}${TEXT_YELLOW}\4${RESET_FORMATTING}/g"
+//
+//   # Make sure formatting is reset
+//   echo -ne ${RESET_FORMATTING}
+// }
+
 export default {
   start () {
     return _serverStatus()
       .then(({ status, pid }) => {
         const isOnlineStatus = status === STATUS_ON
         if (isOnlineStatus) {
-          return `[WARNING] Pentaho Server already running!  PID: ${pid}`
+          return `[WARN] Pentaho Server already running!  PID: ${pid}`
         }
 
         rm('-f', 'promptuser.*')
@@ -42,7 +55,7 @@ export default {
       .then(({ status, pid }) => {
         const isOfflineStatus = status === STATUS_OFF
         if (isOfflineStatus) {
-          return `[WARNING] No Pentaho Server process to shutdown!`
+          return `[WARN] No Pentaho Server process to shutdown!`
         }
 
         return generic.execP(`kill -9 ${pid}`, { silent: false })
@@ -70,7 +83,9 @@ const _serverStatus = () => {
 }
 
 const _tail = (filename = CATALINA_LOG) => {
-  return __waitForFile(filename).then(() => generic.execP(`tail -f ${filename}`, { silent: false }))
+  return __waitForFile(filename).then(() => {
+    shell.tail(`-f ./${filename}`)
+  })
 }
 
 const __pentahoServerPID = () => {

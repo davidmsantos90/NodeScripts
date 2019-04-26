@@ -24,7 +24,7 @@ const extractImpl = ({ source, destination }) => {
 const createExtractElement = ({ zipFile }) => new Element({ id: `extract_${zipFile}` })
 
 export default {
-  extract ({ source, destination, extractedFolder }) {
+  extract ({ source, destination, output }) {
     const { base: zipFile } = parse(source)
     const extractElement = createExtractElement({ zipFile })
 
@@ -35,7 +35,7 @@ export default {
       .catch(() => {
         const error = extractElement.reject()
 
-        rm('-rf', extractedFolder)
+        rm('-rf', output)
 
         return error
       })

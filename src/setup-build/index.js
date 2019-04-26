@@ -3,7 +3,6 @@
 import '@babel/polyfill'
 
 import setupBuildUtils from './util/index'
-import { server, pdi } from './executions'
 
 import logger from '../helpers/logger'
 import terminal from '../helpers/terminal'
@@ -25,9 +24,9 @@ const execution = () => {
     return Promise.reject(linkUndefinedWarn)
   }
 
-  if (setupBuildUtils.isServerMode) return server()
+  if (setupBuildUtils.isServerMode) return setupBuildUtils.createPentahoServer().setup().catch(() => {})
 
-  if (setupBuildUtils.isPdiMode) return pdi()
+  if (setupBuildUtils.isPdiMode) return setupBuildUtils.createPdiClient().setup().catch(() => {})
 
   return Promise.resolve()
 }

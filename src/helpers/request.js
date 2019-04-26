@@ -18,22 +18,52 @@ const isSuccessfulStatus = (status) => {
   return STATUS_CODES[status] === okStatus
 }
 
+const todayBuild = () => {
+  const today = new Date()
+
+  const day = `${today.getDate()}`
+  const month = `${today.getMonth() + 1}`
+
+  return `${(day.length < 2 ? '0' : '') + day}-${(month.length < 2 ? '0' : '') + month}`
+}
+
+const parseDate = (modified = '') => {
+  let date = null
+
+  try {
+    date = new Date(Date.parse(modified))
+  } catch (ex) {
+    // does nothing
+  }
+
+  return isNaN(date) ? null : date
+}
+
+const isTodayBuild = (modified = '') => {
+  const modifiedDate = parseDate(modified)
+  if (modifiedDate == null) return false
+
+  const day = `${modifiedDate.getDate()}`
+  const month = `${modifiedDate.getMonth() + 1}`
+
+  const latestBuild = `${(day.length < 2 ? '0' : '') + day}-${(month.length < 2 ? '0' : '') + month}`
+
+  return latestBuild === todayBuild()
+}
+
 const responseHandler = ({
   resolve, reject, downloadPath
 } = {}) => (response) => {
   const {
     headers: {
+      date,
       'content-encoding': encoding,
       'content-length': total
     },
     statusCode
   } = response
 
-  const responseSuccess = isSuccessfulStatus(statusCode)
-
-  // logger.debug(`Enconding: ${encoding}`)
-  // logger.debug(`Status: ${statusCode}`)
-  // logger.debug(`Total: ${total}`)
+  const responseSuccess = isTodayBuild(date) && isSuccessfulStatus(statusCode)
 
   const progressBar = new ProgressBar({
     id: downloadPath.replace(/.+\/(.+)/, '$1'),
@@ -72,12 +102,19 @@ const responseHandler = ({
 }
 
 export default {
-  get (url, { downloadPath = '' }) {
+  get (url, { downloadPath = '' } = {}) {
+    if (typeof url === 'object') {
+      downloadPath = url.downloadPath
+      url = url.url
+    }
+
     if (url == null || url === '') {
       const error = `'url' parameter must be defined to make a 'get' request`
 
       return Promise.reject(error)
     }
+
+    // console.log('Request: ' + url + '; To: ' + downloadPath)
 
     return new Promise((resolve, reject) => {
       try {

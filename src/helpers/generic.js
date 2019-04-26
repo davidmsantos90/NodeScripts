@@ -1,5 +1,5 @@
 import { join, sep, dirname } from 'path'
-import { access, constants, createWriteStream } from 'fs'
+import { readFile, writeFile, access, constants, createWriteStream } from 'fs'
 
 import { exec, mkdir } from 'shelljs'
 
@@ -36,6 +36,29 @@ export default {
         const exists = error == null
 
         return resolve(exists)
+      })
+    })
+  },
+
+  readWriteFile ({ file, placeholder, valueToReplace }) {
+    return new Promise((resolve, reject) => {
+      const fileSettings = { encoding: 'utf8' }
+
+      const updateData = (data) => {
+        if (!data.includes(valueToReplace)) {
+          data = data.replace(placeholder, valueToReplace)
+        }
+
+        return data
+      }
+
+      readFile(file, fileSettings, (error, data) => {
+        if (error) return reject(error)
+
+        const newData = updateData(data)
+        if (newData === data) return resolve()
+
+        writeFile(file, newData, fileSettings, (error) => error ? reject(error) : resolve())
       })
     })
   }
