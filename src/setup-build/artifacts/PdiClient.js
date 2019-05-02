@@ -65,20 +65,32 @@ export default class PdiClient extends Artifact {
   _download () {
     const requests = [ this ]
 
-    return Promise.all(requests.map((item) => request.get({
-      url: item.downloadURL,
-      downloadPath: item.downloadOutput
-    })))
+    try {
+      return requests.map((item) => request.get({
+        url: item.downloadURL,
+        downloadPath: item.downloadOutput
+      }))
+    } catch (ex) {
+      console.log(ex.message)
+
+      return []
+    }
   }
 
   _extract () {
     const extracts = [ this ]
 
-    return Promise.all(extracts.map((item) => zip.extract({
-      source: item.extractSource,
-      destination: item.extractDestination,
-      output: item.extractOutput
-    })))
+    try {
+      return extracts.map((item) => zip.extract({
+        source: item.extractSource,
+        destination: item.extractDestination,
+        output: item.extractOutput
+      }))
+    } catch (ex) {
+      console.log(ex.message)
+
+      return []
+    }
   }
 
   _cleanup () {

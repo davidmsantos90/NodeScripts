@@ -1,7 +1,5 @@
 import { join, parse } from 'path'
 
-import { underline } from 'chalk'
-
 import generic from '../../helpers/generic'
 import logger from '../../helpers/logger'
 
@@ -99,40 +97,40 @@ export default class Artifact {
     }
   }
 
-  async setup () {
-    logger.info(underline(`1. Download:`))
-    await this.download()
-
-    logger.log()
-    logger.info(underline(`2. Extract:`))
-    await this.extract()
-
-    logger.log()
-    logger.info(underline(`3. Cleanup:`))
-    await this._cleanup()
-  }
-
   async download () {
     const isDownloaded = await generic.exists(this.downloadOutput)
     if (isDownloaded) {
       const { base: file } = parse(this.downloadOutput)
 
-      return logger.warn(` > ${file} already downloaded!`)
+      logger.warn(` > ${file} already downloaded!`)
+
+      return []
     }
 
-    return this._download().catch(() => { /* do nothing */ })
+    return this._download()
   }
+
+  /** @abstract */
+  _download () {}
 
   async extract () {
     const isExtracted = await generic.exists(this.extractOutput)
     if (isExtracted) {
       const { base: zipFile } = parse(this.extractSource)
 
-      return logger.warn(` > ${zipFile} already extracted!`)
+      logger.warn(` > ${zipFile} already extracted!`)
+
+      return []
     }
 
-    return this._extract().catch(() => { /* do nothing */ })
+    return this._extract()
   }
+
+  /** @abstract */
+  _extract () {}
+
+  /** @abstract */
+  _cleanup () {}
 
   get downloadURL () {
     return this._downloadURL()

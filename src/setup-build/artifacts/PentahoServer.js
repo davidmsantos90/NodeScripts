@@ -88,24 +88,31 @@ export default class PentahoServer extends Artifact {
     const requests = [ this, ...this.__plugins ]
 
     try {
-      return Promise.all(requests.map((item) => request.get({
+      return requests.map((item) => request.get({
         url: item.downloadURL,
         downloadPath: item.downloadOutput
-      })))
+      }))
     } catch (ex) {
       console.log(ex.message)
-      return Promise.reject(ex)
+
+      return []
     }
   }
 
   _extract () {
     const extracts = [ this, ...this.__plugins ]
 
-    return Promise.all(extracts.map((item) => zip.extract({
-      source: item.extractSource,
-      destination: item.extractDestination,
-      output: item.extractOutput
-    })))
+    try {
+      return extracts.map((item) => zip.extract({
+        source: item.extractSource,
+        destination: item.extractDestination,
+        output: item.extractOutput
+      }))
+    } catch (ex) {
+      console.log(ex.message)
+
+      return []
+    }
   }
 
   _cleanup () {

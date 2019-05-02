@@ -24,9 +24,11 @@ const execution = () => {
     return Promise.reject(linkUndefinedWarn)
   }
 
-  if (setupBuildUtils.isServerMode) return setupBuildUtils.createPentahoServer().setup().catch(() => {})
+  if (setupBuildUtils.isAllMode) return setupBuildUtils.allBuilds.setup().catch(() => {})
 
-  if (setupBuildUtils.isPdiMode) return setupBuildUtils.createPdiClient().setup().catch(() => {})
+  if (setupBuildUtils.isServerMode) return setupBuildUtils.pentahoServerBuild.setup().catch(() => {})
+
+  if (setupBuildUtils.isPdiMode) return setupBuildUtils.pdiClientBuild.setup().catch(() => {})
 
   return Promise.resolve()
 }

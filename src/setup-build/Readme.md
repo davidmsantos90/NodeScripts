@@ -21,6 +21,9 @@ To avoid always having to declare the same `setup-build` option or simply to def
    <br>(the rest will be ignored)
 
  - **Note:** `path` option is always required by `setup-build`
+ - **Note:** create the folder `./src/libs` and copy `org.apache.karaf.jaas.modules-3.0.9.jar` inside
+             in order to complete the setup of a `pentaho-server-ee` build
+
    ```
     Example:
      {
