@@ -66,7 +66,7 @@ export default class Element extends EventEmitter {
 
     this.update(options)
 
-    return Promise.reject(this.__error)
+    return new Error(options.error || this.__error)
   }
 
   get __error () {

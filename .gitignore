@@ -5,3 +5,5 @@
 
 # Files to ignore
 **/local.config.json
+terminalTest.js
+unzip.js

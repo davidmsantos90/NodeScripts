@@ -2,48 +2,24 @@
 
 import '@babel/polyfill'
 
-import setupBuildUtils from './util/index'
+import { setup, helpText, isHelpEnabled } from './util/index'
 
 import logger from '../helpers/logger'
 import terminal from '../helpers/terminal'
 
 // ---
 
-const execution = () => {
-  if (!setupBuildUtils.isBaseFolderDefined) {
-    const pathUndefinedWarn = `Define 'path' in the './local.config.json' or by using the '-p' option!`
-    logger.warn(pathUndefinedWarn)
+const endProcess = ({ error }) => {
+  if (error != null) logger.error(error)
 
-    return Promise.reject(pathUndefinedWarn)
-  }
-
-  if (!setupBuildUtils.isBaseLinkDefined) {
-    const linkUndefinedWarn = `Define 'link' in the './local.config.json' or by using the '-p' option!`
-    logger.warn(linkUndefinedWarn)
-
-    return Promise.reject(linkUndefinedWarn)
-  }
-
-  if (setupBuildUtils.isAllMode) return setupBuildUtils.allBuilds.setup().catch(() => {})
-
-  if (setupBuildUtils.isServerMode) return setupBuildUtils.pentahoServerBuild.setup().catch(() => {})
-
-  if (setupBuildUtils.isPdiMode) return setupBuildUtils.pdiClientBuild.setup().catch(() => {})
-
-  return Promise.resolve()
-}
-
-const endProcess = () => {
   terminal._exit()
   process.exit()
 }
 
-if (setupBuildUtils.isHelp) {
-  logger.log(setupBuildUtils.help)
+if (isHelpEnabled()) {
+  logger.log(helpText())
 
   endProcess()
 }
 
-execution()
-  .then(endProcess)
-  .catch(endProcess)
+setup().then(endProcess).catch(endProcess)

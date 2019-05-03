@@ -1,7 +1,4 @@
-import { join, parse } from 'path'
-
-import generic from '../../helpers/generic'
-import logger from '../../helpers/logger'
+import { join } from 'path'
 
 export const RELEASE = 'release'
 export const SNAPSHOT = 'snapshot'
@@ -17,25 +14,7 @@ export const PDI_FOLDER = 'data-integration'
 export const PDI_SYSTEM_FOLDER = join(PDI_FOLDER, 'system')
 export const PDI_KARAF_ETC_FOLDER = join(PDI_SYSTEM_FOLDER, 'karaf', 'etc')
 
-const normalize = (value = '', size = 2) => {
-  const valueSize = `${value}`.trim().length
-  if (valueSize >= size) return value
-
-  return `${'0'.repeat(size - valueSize) + value}`
-}
-
-const latestBuild = () => {
-  const today = new Date()
-
-  const day = normalize(today.getDate())
-  const month = normalize(today.getMonth() + 1)
-
-  return `${day}-${month}`
-}
-
-// ----- Download -----
-
-const downloadLink = ({ link, type, tag, version, build }) => {
+export const downloadLink = ({ link, type, tag, version, build }) => {
   const isQat = type === QAT
   const isRelease = type === RELEASE
 
@@ -44,104 +23,41 @@ const downloadLink = ({ link, type, tag, version, build }) => {
   return `${link}/${linkVersion}${!isRelease ? '-' + tag : ''}/${build}`
 }
 
-const downloadName = ({ name, build, version, type, tag }) => {
+export const downloadName = ({ name, _build, version, type, tag }) => {
   const isSnapshot = type === SNAPSHOT
 
-  return `${name}-${version}-${isSnapshot ? tag : build}.zip`
+  return `${name}-${version}-${isSnapshot ? tag : _build}.zip`
 }
 
-const downloadFolder = ({ root, build, type }) => {
-  return join(root, DOWNLOAD_FOLDER, type, build) // join(downloadPath, this._extractName())
+export const downloadOuput = ({ root, name, _build, type, version }) => {
+  const zipFile = `${name}.zip`
+
+  return join(root, DOWNLOAD_FOLDER, type, version, _build, zipFile)
 }
 
-// ----- Extract -----
-
-const extractNameZip = (properties) => {
-  return `${extractName(properties)}.zip`
+export const extractOutput = ({ root, _build, type, version, name, subFolder = '' }) => {
+  return join(root, type, version, _build, name, subFolder)
 }
-const extractName = ({ name, version, type, tag }) => {
-  const isRelease = type === RELEASE
 
-  return `${name}-${version + (!isRelease ? '-' + tag : '')}` // -${latestBuild}
-}
+// ----- Artifact -----
 
 export default class Artifact {
-  constructor ({ name, build, type = '', version, link, root, parent, subFolder = '' }) {
-    this.__name = name
+  constructor (props = {}) {
+    this.__cleanups = []
 
-    this.__type = type.toLowerCase()
-    this.__tag = type.toUpperCase()
-
-    this.__build = build === 'latest' ? latestBuild() : build
-    this.__version = version
-
-    this.__link = downloadLink({ link, build, version, type: this.__type, tag: this.__tag })
-    this.__root = root
-
-    this.__parent = parent
-    this.__subFolder = subFolder
+    this.__properties = props
   }
 
-  get properties () {
-    return {
-      name: this.__name,
-
-      build: this.__build,
-      version: this.__version,
-
-      type: this.__type,
-      tag: this.__tag,
-
-      link: this.__link,
-      root: this.__root
-    }
+  get cleanups () {
+    return this.__cleanups
   }
-
-  async download () {
-    const isDownloaded = await generic.exists(this.downloadOutput)
-    if (isDownloaded) {
-      const { base: file } = parse(this.downloadOutput)
-
-      logger.warn(` > ${file} already downloaded!`)
-
-      return []
-    }
-
-    return this._download()
-  }
-
-  /** @abstract */
-  _download () {}
-
-  async extract () {
-    const isExtracted = await generic.exists(this.extractOutput)
-    if (isExtracted) {
-      const { base: zipFile } = parse(this.extractSource)
-
-      logger.warn(` > ${zipFile} already extracted!`)
-
-      return []
-    }
-
-    return this._extract()
-  }
-
-  /** @abstract */
-  _extract () {}
-
-  /** @abstract */
-  _cleanup () {}
 
   get downloadURL () {
-    return this._downloadURL()
-  }
-
-  _downloadURL () {
-    return `${this.__link}/${downloadName(this.properties)}`
+    return `${downloadLink(this.__properties)}/${downloadName(this.__properties)}`
   }
 
   get downloadOutput () {
-    return this._downloadOutput()
+    return downloadOuput(this.__properties)
   }
 
   /**
@@ -151,7 +67,7 @@ export default class Artifact {
    * @readonly
    */
   get extractSource () {
-    return this._downloadOutput()
+    return this.downloadOutput
   }
 
   /**
@@ -164,27 +80,7 @@ export default class Artifact {
     return this._extractOutput()
   }
 
-  /**
-   * Gets the extract output destination.
-   *
-   * @type {string}
-   * @readonly
-   */
-  get extractDestination () {
-    return this._extractDestination()
-  }
-
-  _downloadOutput () {
-    return join(downloadFolder(this.properties), extractNameZip(this.properties))
-  }
-
-  _extractDestination () {
-    const extractBase = join(this.__root, this.__type, this.__build)
-
-    return join(extractBase, extractName(this.properties))
-  }
-
   _extractOutput () {
-    return join(this._extractDestination(), this.__subFolder)
+    return extractOutput(this.__properties)
   }
 }

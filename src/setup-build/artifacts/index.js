@@ -1,7 +1,11 @@
 import Artifact from './Artifact'
 import PdiClient from './PdiClient'
-import PentahoServer from './PentahoServer'
+import PentahoServer, { AnalyzerPlugin } from './PentahoServer'
+
+export {
+  Artifact, PdiClient, PentahoServer, AnalyzerPlugin
+}
 
 export default {
-  Artifact, PdiClient, PentahoServer
+  Artifact, PdiClient, PentahoServer, AnalyzerPlugin
 }

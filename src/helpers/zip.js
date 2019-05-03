@@ -1,21 +1,20 @@
 import '@babel/polyfill'
 
 import npmUnzip from 'decompress'
-import { rm, mkdir, which } from 'shelljs'
+import { which } from 'shelljs'
 
 import { parse } from 'path'
 
 import Element from './Element'
 import generic from './generic'
+import shell from './shell'
 
 const extractImpl = ({ source, destination }) => {
   const unzipInstalled = which('unzip') != null
   if (unzipInstalled) {
-    mkdir('-p', destination)
+    shell.mkdir(`-p ${destination}`)
 
-    const command = `unzip -q ${source} -d ${destination}`
-
-    return generic.execP(command)
+    return generic.execP(`unzip -q ${source} -d ${destination}`)
   }
 
   return npmUnzip(source, destination).then(() => undefined)
@@ -24,20 +23,18 @@ const extractImpl = ({ source, destination }) => {
 const createExtractElement = ({ zipFile }) => new Element({ id: `extract_${zipFile}` })
 
 export default {
-  extract ({ source, destination, output }) {
+  extract ({ source, destination }) {
     const { base: zipFile } = parse(source)
-    const extractElement = createExtractElement({ zipFile })
 
-    extractElement.update({ message: ` > ${zipFile} to ${destination}/`, type: 'info' })
+    const extractElement = createExtractElement({ zipFile })
+    extractElement.update({ message: ` > ${zipFile}`, type: 'info' })
 
     return extractImpl({ source, destination })
       .then(() => extractElement.end())
-      .catch(() => {
-        const error = extractElement.reject()
+      .catch((error) => {
+        shell.rm(`-rf ${destination}`)
 
-        rm('-rf', output)
-
-        return error
+        return extractElement.reject({ error })
       })
   }
 }

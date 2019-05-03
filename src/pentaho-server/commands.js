@@ -1,9 +1,8 @@
-import { echo, rm } from 'shelljs'
-
 import { access, watch, constants } from 'fs'
 
 import shell from '../helpers/shell'
 import generic from '../helpers/generic'
+import logger from '../helpers/logger'
 
 import pentahoServerUtils from './util/index'
 
@@ -27,41 +26,52 @@ const STATUS_OFF = 'offline'
 // }
 
 export default {
-  start () {
-    return _serverStatus()
-      .then(({ status, pid }) => {
-        const isOnlineStatus = status === STATUS_ON
-        if (isOnlineStatus) {
-          return `[WARN] Pentaho Server already running!  PID: ${pid}`
-        }
+  async start () {
+    let error = null
 
-        rm('-f', 'promptuser.*')
+    const { status, pid } = await _serverStatus()
 
-        return generic.execP(CLEAN_KARAF_CMD, { silent: false })
-          .then(() => generic.execP(`./${PENTAHO_START_SH}`))
-          .then(() => {
-            if (pentahoServerUtils.isTailMode) {
-              return _tail()
-            }
+    try {
+      const isOnlineStatus = status === STATUS_ON
+      if (isOnlineStatus) {
+        throw new Error(`Pentaho Server already running!  PID: ${pid}`)
+      }
 
-            return '[INFO] Pentaho Server is starting...'
-          })
-      })
-      .then((message) => echo(message))
+      await shell.rm(`-f promptuser.*`)
+      await generic.execP(CLEAN_KARAF_CMD, { silent: false })
+      await generic.execP(`./${PENTAHO_START_SH}`)
+
+      if (pentahoServerUtils.isTailMode) {
+        return _tail()
+      }
+    } catch (ex) {
+      error = ex
+    }
+
+    if (error == null) logger.log(`Pentaho Server is starting... PID: ${pid}`)
+
+    return { error }
   },
 
-  stop () {
-    return _serverStatus()
-      .then(({ status, pid }) => {
-        const isOfflineStatus = status === STATUS_OFF
-        if (isOfflineStatus) {
-          return `[WARN] No Pentaho Server process to shutdown!`
-        }
+  async stop () {
+    let error = null
 
-        return generic.execP(`kill -9 ${pid}`, { silent: false })
-          .then(() => `[INFO] Force shutdown of Pentaho Server. PID: ${pid}`)
-      })
-      .then((message) => echo(message))
+    const { status, pid } = await _serverStatus()
+
+    try {
+      const isOfflineStatus = status === STATUS_OFF
+      if (isOfflineStatus) {
+        throw new Error(`No Pentaho Server process to shutdown!`)
+      }
+
+      await generic.execP(`kill -9 ${pid}`, { silent: false })
+    } catch (ex) {
+      error = ex
+    }
+
+    if (error == null) logger.log(`Force shutdown of Pentaho Server. PID: ${pid}`)
+
+    return { error }
   },
 
   restart () {

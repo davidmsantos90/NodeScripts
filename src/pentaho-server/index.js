@@ -1,9 +1,10 @@
 #! /usr/bin/env node
 
-import { echo } from 'shelljs'
-
 import pentahoServerCmds from './commands'
 import pentahoServerUtils from './util/index'
+
+import logger from '../helpers/logger'
+import terminal from '../helpers/terminal'
 
 const command = () => {
   if (pentahoServerUtils.isRestart) return pentahoServerCmds.restart()
@@ -15,9 +16,15 @@ const command = () => {
   return Promise.resolve()
 }
 
+const endProcess = ({ error }) => {
+  if (error != null) logger.error(error)
+
+  terminal._exit()
+  process.exit()
+}
+
 if (pentahoServerUtils.isHelp) {
-  echo(pentahoServerUtils.help)
+  logger.log(pentahoServerUtils.help)
 } else {
-  command()
-    .catch((error) => echo(error))
+  command().then(endProcess).catch(endProcess)
 }

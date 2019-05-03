@@ -1,112 +1,104 @@
-import { underline } from 'chalk'
-
 import { options, help } from './arguments'
 
-import artifacts from '../artifacts/index'
-import logger from '../../helpers/logger'
+import commands from '../commands/index'
+
+import { PentahoServer, AnalyzerPlugin, PdiClient } from '../artifacts/index'
 
 export const SERVER_EXEC = 'server'
 export const PDI_EXEC = 'pdi'
 export const ALL_EXEC = 'all'
 
-const SetupBuildUtils = ({
-  version, type, path, link, build = 'latest', execution: _execution, help: _isHelp, debug: _isDebug
-}) => ({
-  get pentahoServerBuild () {
-    return this.__createSetupBuild(this._pentahoServerBuild)
-  },
+/** @private */
+const normalize = (value = '', size = 2) => {
+  const valueSize = `${value}`.trim().length
+  if (valueSize >= size) return value
 
-  get _pentahoServerBuild () {
-    const { PentahoServer } = artifacts
+  return `${'0'.repeat(size - valueSize) + value}`
+}
 
-    return new PentahoServer({
-      build, type, version, link, root: path
-    })
-  },
+/** @private */
+const parseDate = (modified = '') => {
+  let date = null
 
-  get pdiClientBuild () {
-    return this.__createSetupBuild(this._pdiClientBuild)
-  },
-
-  get _pdiClientBuild () {
-    const { PdiClient } = artifacts
-
-    return new PdiClient({
-      build, type, version, link, root: path
-    })
-  },
-
-  get allBuilds () {
-    return this.__createSetupBuild(this._pdiClientBuild, this._pentahoServerBuild)
-  },
-
-  __createSetupBuild (...artifacts) {
-    const executeAll = async (method) => {
-      let executions = []
-
-      for (let build of artifacts) {
-        const exec = await build[method]()
-
-        if (Array.isArray(exec)) executions = [ ...executions, ...exec ]
-        else executions.push(exec)
-      }
-
-      return executions
-    }
-
-    return {
-      async setup () {
-        logger.info(underline(`1. Download:`))
-        await Promise.all([
-          ...await executeAll('download')
-        ]).catch(() => { /* do nothing */ })
-
-        logger.log()
-        logger.info(underline(`2. Extract:`))
-        await Promise.all([
-          ...await executeAll('extract')
-        ]).catch(() => { /* do nothing */ })
-
-        logger.log()
-        logger.info(underline(`3. Cleanup:`))
-        await Promise.all([
-          ...await executeAll('_cleanup')
-        ]).catch(() => { /* do nothing */ })
-      }
-    }
-  },
-
-  get isHelp () {
-    return _isHelp
-  },
-
-  get isDebug () {
-    return _isDebug
-  },
-
-  get isBaseFolderDefined () {
-    return path != null
-  },
-
-  get isBaseLinkDefined () {
-    return link != null
-  },
-
-  get help () {
-    return help
-  },
-
-  get isServerMode () {
-    return _execution === SERVER_EXEC
-  },
-
-  get isPdiMode () {
-    return _execution === PDI_EXEC
-  },
-
-  get isAllMode () {
-    return _execution === ALL_EXEC
+  try {
+    date = new Date(Date.parse(modified))
+  } catch (ex) {
+    // does nothing
   }
-})
 
-export default SetupBuildUtils(options)
+  return isNaN(date) ? null : date
+}
+
+/** @private */
+const stringDate = (date) => {
+  const day = normalize(`${date.getDate()}`)
+  const month = normalize(`${date.getMonth() + 1}`)
+
+  return `${day}-${month}`
+}
+
+export const latestBuild = () => stringDate(new Date())
+
+export const isLatestBuild = (modified = '') => {
+  const modifiedDate = parseDate(modified)
+  if (modifiedDate == null) return false
+
+  return stringDate(modifiedDate) === latestBuild()
+}
+
+export const isHelpEnabled = () => options.help
+export const helpText = () => help
+
+export const setup = async () => {
+  const { execution, build, type, path: root, link } = options
+
+  const setupOptions = {
+    ...options,
+    root,
+
+    _build: build === 'latest' ? latestBuild() : build,
+
+    type: type.toLowerCase(),
+    tag: type.toUpperCase()
+  }
+
+  const isAllMode = execution === ALL_EXEC
+
+  let builds = []
+  if (isAllMode || execution === SERVER_EXEC) {
+    builds = [
+      new PentahoServer(setupOptions), new AnalyzerPlugin(setupOptions)
+    ]
+  }
+
+  if (isAllMode || execution === PDI_EXEC) {
+    builds = [
+      ...builds, new PdiClient(setupOptions)
+    ]
+  }
+
+  let error = null
+
+  try {
+    if (root == null) {
+      throw new Error(`Define 'path' in the './local.config.json' or by using the '-p' option!`)
+    }
+
+    if (link == null) {
+      throw new Error(`Define 'link' in the './local.config.json' or by using the '-p' option!`)
+    }
+
+    let { error: downEx } = await commands.download({ builds, ...setupOptions })
+    if (downEx != null) throw downEx
+
+    let { error: extrEx } = await commands.extract({ builds, ...setupOptions })
+    if (extrEx != null) throw extrEx
+
+    let { error: cleanEx } = await commands.cleanup({ builds, ...setupOptions })
+    if (cleanEx != null) throw cleanEx
+  } catch (ex) {
+    error = ex
+  }
+
+  return { error }
+}
