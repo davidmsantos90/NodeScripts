@@ -1,6 +1,8 @@
 import { existsSync } from 'fs'
 import { join } from 'path'
 
+// import logger from '../../helpers/logger'
+
 import bundles from '../bundles/index'
 
 import { options, help, defaults } from './arguments'
@@ -46,24 +48,11 @@ const UtilsFactory = ({
   help: isHelp = false,
   debug: isDebug = false
 }) => {
-  if (isDebug) {
-    console.log(`"root": ${root}`)
-    console.log(`"output": ${output}`)
-    console.log(`"bundle list": ${bundleList}`)
-    console.log(`"activate mode": ${isActivate}`)
-  }
-
   const karafPath = join(root, SYSTEM_FOLDER, KARAF_FOLDER) // .../data-integration/system/karaf/
 
   const karafSystemPath = join(karafPath, SYSTEM_FOLDER)
   const storePath = join(karafPath, SYSTEM_FOLDER, output) // .../karaf/system/.store/
   const cachePath = join(karafPath, KARAF_CACHES_FOLDER) // .../karaf/caches/
-
-  if (isDebug) {
-    console.log(`"karafPath": ${karafPath}`)
-    console.log(`"storePath": ${storePath}`)
-    console.log(`"cachePath": ${cachePath}`)
-  }
 
   const { Bundle } = bundles
 
@@ -108,12 +97,6 @@ const UtilsFactory = ({
 
       let bundlesToActivate = []
       for (let [, bundle] of bundleMap) {
-        if (this.isDebug) {
-          console.log(`[${bundle.id.toUpperCase()}] - to activate`)
-          console.log(`isStored: ${bundle.isStored}`)
-          console.log(`isActive: ${bundle.isActive}`)
-        }
-
         if (canActivateBundle(bundle)) {
           bundlesToActivate.push(bundle)
         }
@@ -133,12 +116,6 @@ const UtilsFactory = ({
 
       let bundlesToStore = []
       for (let [, bundle] of bundleMap) {
-        if (this.isDebug) {
-          console.log(`[${bundle.id.toUpperCase()}] - to store`)
-          console.log(`isStored: ${bundle.isStored}`)
-          console.log(`isActive: ${bundle.isActive}`)
-        }
-
         if (canStoreBundle(bundle)) {
           bundlesToStore.push(bundle)
         }

@@ -2,7 +2,12 @@ import { options, help } from './arguments'
 
 import commands from '../commands/index'
 
-import { PentahoServer, AnalyzerPlugin, PdiClient } from '../artifacts/index'
+import {
+  PentahoServer,
+  AnalyzerPlugin,
+  DashboardDesignerPlugin,
+  PdiClient
+} from '../artifacts/index'
 
 export const SERVER_EXEC = 'server'
 export const PDI_EXEC = 'pdi'
@@ -52,26 +57,35 @@ export const helpText = () => help
 export const setup = async () => {
   const { execution, build, type, path: root, link } = options
 
+  const isEnterprise = !execution.endsWith('-ce')
+
   const setupOptions = {
     ...options,
     root,
 
     _build: build === 'latest' ? latestBuild() : build,
+    enterprise: isEnterprise,
 
     type: type.toLowerCase(),
     tag: type.toUpperCase()
   }
 
-  const isAllMode = execution === ALL_EXEC
+  const isAllMode = execution.startsWith(ALL_EXEC)
 
   let builds = []
-  if (isAllMode || execution === SERVER_EXEC) {
-    builds = [
-      new PentahoServer(setupOptions), new AnalyzerPlugin(setupOptions)
-    ]
+  if (isAllMode || execution.startsWith(SERVER_EXEC)) {
+    builds = [ new PentahoServer(setupOptions) ]
+
+    if (isEnterprise) {
+      builds = [
+        ...builds,
+        new AnalyzerPlugin(setupOptions),
+        new DashboardDesignerPlugin(setupOptions)
+      ]
+    }
   }
 
-  if (isAllMode || execution === PDI_EXEC) {
+  if (isAllMode || execution.startsWith(PDI_EXEC)) {
     builds = [
       ...builds, new PdiClient(setupOptions)
     ]

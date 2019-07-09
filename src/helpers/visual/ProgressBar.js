@@ -1,10 +1,7 @@
 import Element from './Element'
-
-import terminal from './terminal'
-
+import { done, error, info } from './Logger'
 import {
-  green, red, blue, cyan,
-  bold
+  green, red, blue, bold
 } from 'chalk'
 
 const blueBold = (value) => blue(bold(value))
@@ -18,7 +15,7 @@ export default class ProgressBar extends Element {
   }) {
     super({ id })
 
-    this.__time = { start: Date.now() }
+    this.__time = { start: Date.now(), current: Date.now() }
 
     this.__inThrottle = false
 
@@ -30,63 +27,54 @@ export default class ProgressBar extends Element {
     this.__total = total
   }
 
-  get elapsedTime () {
-    const { start, end = Date.now() } = this.__time
+  set time ({ current, end }) {
+    if (current != null) this.__time.current = current
 
-    return new Date(end - start)
+    if (this.__time.end == null && end != null) this.__time.end = end
+  }
+  get time () {
+    return this.__time
+  }
+
+  get elapsedTime () {
+    const { start, current, end } = this.time
+
+    return new Date((end == null ? current : end) - start)
   }
 
   set progress (downloaded) {
     const total = this.__total
+    if (!total) this.__rejected = true
 
-    if (!total) {
-      this.__progress = 0
-      this.__isRejected = true
-    } else {
-      const progress = downloaded / total
+    const progress = this.__progress = total ? downloaded / total : 0
+    if (progress === 1) this.__done = true
 
-      this.__isDone = progress === 1
-      this.__progress = progress
-    }
+    if (!total || progress === 1) this.time = { end: Date.now() }
+    else this.time = { current: Date.now() }
   }
   get progress () {
     return this.__progress
   }
 
-  update ({ downloaded = 0 }) {
+  _update ({ downloaded = 0 }) {
     this.progress = downloaded
 
-    if ((this.isDone || this.isRejected) && this.__time.end == null) {
-      this.__time.end = Date.now()
-    }
+    if (this.__inThrottle && !this.done) return
 
-    if (this.__inThrottle && !this.isDone) return
-
-    try {
-      this.draw()
-    } catch (ex) {
-      this.__isRejected = true
-    }
+    this.draw()
   }
 
-  draw () {
+  _draw () {
     const separator = bold(' | ')
 
-    let output = this._drawCaption()
-    output += separator + this._drawBar()
-    output += separator + this._drawClock()
-    output += separator + this._drawProgressPercentage()
-
-    terminal.write(output, this.id)
+    const output = this._drawCaption() +
+      separator + this._drawBar() +
+      separator + this._drawClock() +
+      separator + this._drawProgressPercentage()
 
     this._throttle()
-  }
 
-  /** @override */
-  get __error () {
-    const message = `ProgressBar ${this.id} was rejected!`
-
-    return new Error(message)
+    return output
   }
 
   _throttle () {
@@ -100,21 +88,21 @@ export default class ProgressBar extends Element {
   }
 
   _drawCaption () {
-    const filename = this._padR(` > ${this.id}`, ' ', 50)
+    const filename = this._padR(` - ${this.id}`, ' ', 55)
 
-    if (this.isDone) return greenBold('[DONE]  ') + green(filename)
+    if (this.done) return done(filename)
 
-    if (this.isRejected) return redBold('[ERROR] ') + red(filename)
+    if (this.rejected) return error(filename)
 
-    return blueBold('[INFO]  ') + cyan(filename)
+    return info(filename)
   }
 
   _drawProgressPercentage () {
     const percentage = `${(this.progress * 100).toFixed(2)}%`
 
-    if (this.isDone) return greenBold(percentage)
+    if (this.done) return greenBold(percentage)
 
-    if (this.isRejected) return redBold(percentage)
+    if (this.rejected) return redBold(percentage)
 
     return blueBold(percentage)
   }
@@ -123,9 +111,9 @@ export default class ProgressBar extends Element {
     const elapsedTime = this.elapsedTime
     const clock = `${this._padL(elapsedTime.getMinutes())}:${this._padL(elapsedTime.getSeconds())}`
 
-    if (this.isDone) return greenBold(clock)
+    if (this.done) return greenBold(clock)
 
-    if (this.isRejected) return redBold(clock)
+    if (this.rejected) return redBold(clock)
 
     return blueBold(clock)
   }
@@ -150,6 +138,6 @@ export default class ProgressBar extends Element {
 
     const size = Math.ceil(this.progress * this.__length) - 1
 
-    return `${size > -1 ? filler.repeat(size) : ''}${this.isDone ? filler : headFiller}`
+    return `${size > -1 ? filler.repeat(size) : ''}${this.done ? filler : headFiller}`
   }
 }

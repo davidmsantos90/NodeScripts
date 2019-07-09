@@ -1,40 +1,56 @@
 import '@babel/polyfill'
 
 import npmUnzip from 'decompress'
-import { which } from 'shelljs'
 
-import { parse } from 'path'
+// import ProgressBar from './visual/ProgressBar'
+import terminal from './visual/terminal'
 
-import Element from './Element'
-import generic from './generic'
 import shell from './shell'
 
-const extractImpl = ({ source, destination }) => {
-  const unzipInstalled = which('unzip') != null
-  if (unzipInstalled) {
-    shell.mkdir(`-p ${destination}`)
+// const zipSize = async (source) => {
+//   const stat = await generic.stat(source)
+//
+//   // console.log(stat)
+//
+//   return stat.size
+// }
 
-    return generic.execP(`unzip -q ${source} -d ${destination}`)
+const extractImpl = async ({ source, destination }) => {
+  const unzipInstalled = await shell.which('unzip') != null
+  if (unzipInstalled) {
+    await shell.mkdir(`-p ${destination}`)
+
+    return shell.spawn(`unzip -q ${source} -d ${destination}`, { silent: true })
   }
 
   return npmUnzip(source, destination).then(() => undefined)
 }
 
-const createExtractElement = ({ zipFile }) => new Element({ id: `extract_${zipFile}` })
-
 export default {
-  extract ({ source, destination }) {
-    const { base: zipFile } = parse(source)
+  async extract ({ id, source, destination }) {
+    const extractElement = terminal.__log({
+      id: `extract_${id}`, type: 'info', message: ` - ${id}`
+    })
 
-    const extractElement = createExtractElement({ zipFile })
-    extractElement.update({ message: ` > ${zipFile}`, type: 'info' })
+    let error = null
 
-    return extractImpl({ source, destination })
-      .then(() => extractElement.end())
-      .catch((error) => {
-        shell.rm(`-rf ${destination}`)
+    try {
+      // const total = await zipSize(source)
+      // await shell.mkdir(`-p ${destination}`)
+      // const progressBar = new ProgressBar({ id, total })
+      // watch(destination, { recursive: true }, () => {
+      //   zipSize(destination).then((size) => progressBar.update({ total: size }))
+      // })
 
-        return extractElement.reject({ error })
-      })
+      await extractImpl({ source, destination })
+
+      extractElement.end()
+    } catch (ex) {
+      await shell.rm(`-rf ${destination}`)
+
+      error = extractElement.reject({ error: ex })
+    }
+
+    return { error }
   }
 }

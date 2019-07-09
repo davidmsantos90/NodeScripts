@@ -5,12 +5,12 @@ import '@babel/polyfill'
 import { setup, helpText, isHelpEnabled } from './util/index'
 
 import logger from '../helpers/logger'
-import terminal from '../helpers/terminal'
+import terminal from '../helpers/visual/terminal'
 
 // ---
 
 const endProcess = ({ error }) => {
-  if (error != null) logger.error(error)
+  if (error != null) terminal.error(error.message)
 
   terminal._exit()
   process.exit()
@@ -21,5 +21,7 @@ if (isHelpEnabled()) {
 
   endProcess()
 }
+
+terminal.init()
 
 setup().then(endProcess).catch(endProcess)

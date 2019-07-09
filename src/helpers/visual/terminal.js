@@ -1,8 +1,9 @@
 import '@babel/polyfill'
 
 import { sync as getCursorPosition } from 'get-cursor-position'
-
 import readline from 'readline'
+
+import Logger from './Logger'
 
 export default {
   _input: process.stdin,
@@ -74,6 +75,36 @@ export default {
     this._ready = true
   },
 
+  log (message = '') {
+    return this.__log({ message })
+  },
+
+  info (message = '') {
+    return this.__log({ message, type: 'info' })
+  },
+
+  debug (message = '') {
+    return this.__log({ message, type: 'debug' })
+  },
+
+  warn (message = '') {
+    return this.__log({ message, type: 'warn' })
+  },
+
+  error (message = '') {
+    return this.__log({ message, type: 'error' })
+  },
+
+  __log ({ id, message = '', type = 'log' }) {
+    if (!this.isReady) this.init()
+
+    const log = new Logger({ id, type })
+
+    log.update({ message })
+
+    return log
+  },
+
   write (message = '', key) {
     return this._write({ message, key })
   },
@@ -81,7 +112,7 @@ export default {
   _write ({ key, x, y, message = '' }) {
     this._cursorTo({ key, x, y })._clearLine()
 
-    this._output.write(`${message}`)
+    this._output.write(message)
 
     return this
   },

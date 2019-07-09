@@ -4,22 +4,18 @@ import pentahoServerCmds from './commands'
 import pentahoServerUtils from './util/index'
 
 import logger from '../helpers/logger'
-import terminal from '../helpers/terminal'
 
-const command = () => {
+const command = async () => {
   if (pentahoServerUtils.isRestart) return pentahoServerCmds.restart()
 
   if (pentahoServerUtils.isStop) return pentahoServerCmds.stop()
 
   if (pentahoServerUtils.isStart) return pentahoServerCmds.start()
-
-  return Promise.resolve()
 }
 
-const endProcess = ({ error }) => {
+const endProcess = ({ error } = {}) => {
   if (error != null) logger.error(error)
 
-  terminal._exit()
   process.exit()
 }
 

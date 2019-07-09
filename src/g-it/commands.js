@@ -1,4 +1,4 @@
-import generic from '../helpers/generic'
+import shell from '../helpers/shell'
 import gitUtils from './util/index'
 
 // Pentaho Millennuium Falcon - 1858852
@@ -7,13 +7,13 @@ import gitUtils from './util/index'
 
 // List team members - https://api.github.com/teams/1858852/members
 
-export { listAllRepositories }
+// export { listAllRepositories }
 
 // List org repos - https://api.github.com/orgs/pentaho/repos
-const listAllRepositories = () => {
+export const listAllRepositories = () => {
   const repositories = []
 
-  const _parseRepositories = (url) => generic.execP(url).then((output) => {
+  const _parseRepositories = (url) => shell.exec(url).then((output) => {
     const repos = JSON.parse(output)
 
     for (let index = 0, R = repos.length; index < R; index++) {

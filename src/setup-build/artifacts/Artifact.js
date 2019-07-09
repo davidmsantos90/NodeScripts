@@ -1,10 +1,16 @@
 import { join } from 'path'
 
+import generic from '../../helpers/generic'
+import shell from '../../helpers/shell'
+
 export const RELEASE = 'release'
 export const SNAPSHOT = 'snapshot'
 export const QAT = 'qat'
 
+export const JAAS_MODULES_LIB = 'org.apache.karaf.jaas.modules-3.0.9.jar'
 export const DOWNLOAD_FOLDER = 'downloads'
+
+export const CLEANED_UP = '.clean'
 
 export const SERVER_FOLDER = 'pentaho-server'
 export const SERVER_SYSTEM_FOLDER = join(SERVER_FOLDER, 'pentaho-solutions', 'system')
@@ -13,6 +19,38 @@ export const SERVER_KARAF_ETC_FOLDER = join(SERVER_SYSTEM_FOLDER, 'karaf', 'etc'
 export const PDI_FOLDER = 'data-integration'
 export const PDI_SYSTEM_FOLDER = join(PDI_FOLDER, 'system')
 export const PDI_KARAF_ETC_FOLDER = join(PDI_SYSTEM_FOLDER, 'karaf', 'etc')
+
+// Artifact cleanups
+
+export const markAsCleanedUp = async (base) => {
+  const file = join(base, CLEANED_UP)
+
+  return shell.touch(file)
+}
+
+export const enableKarafFeatures = async (base, karafEtcFolder) => {
+  const file = join(base, karafEtcFolder, 'org.apache.karaf.features.cfg')
+
+  const placeholder = 'featuresBoot='
+
+  const featuresToAdd = 'ssh,pentaho-marketplace,'
+  const valueToReplace = `${placeholder + featuresToAdd}`
+
+  return generic.readWriteFile({ file, placeholder, valueToReplace })
+}
+
+export const enableKarafLocalDependencies = async (base, karafEtcFolder) => {
+  const file = join(base, karafEtcFolder, 'org.ops4j.pax.url.mvn.cfg')
+
+  const placeholder = 'org.ops4j.pax.url.mvn.localRepository='
+
+  const commentToEnable = '# '
+  const valueToReplace = `${commentToEnable + placeholder}`
+
+  return generic.readWriteFile({ file, placeholder, valueToReplace })
+}
+
+// Artifact Aux Methods
 
 export const downloadLink = ({ link, type, tag, version, build }) => {
   const isQat = type === QAT
@@ -46,6 +84,16 @@ export default class Artifact {
     this.__cleanups = []
 
     this.__properties = props
+  }
+
+  get id () {
+    const { name } = this.__properties
+
+    return name
+  }
+
+  get isPlugin () {
+    return false
   }
 
   get cleanups () {

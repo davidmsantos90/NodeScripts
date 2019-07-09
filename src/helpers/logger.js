@@ -1,36 +1,35 @@
-import Element from './Element'
-import terminal from './terminal'
+import { done, error, info, log, warn, debug } from './visual/Logger'
 
-terminal.init()
+const ensureNewline = (message = '') => message.endsWith('\n') ? message : `${message}\n`
 
-const logger = {
-  __count: 0,
-
+export default {
   log (message = '') {
-    return this.__write({ message })
+    return this.__write(message)
   },
 
   info (message = '') {
-    return this.__write({ message, type: 'info' })
+    return this.__write(message, info)
   },
 
   debug (message = '') {
-    return this.__write({ message, type: 'debug' })
+    return this.__write(message, debug)
   },
 
   warn (message = '') {
-    return this.__write({ message, type: 'warn' })
+    return this.__write(message, warn)
   },
 
   error (message = '') {
-    return this.__write({ message, type: 'error' })
+    return this.__write(message, error)
   },
 
-  __write ({ message = '', type = 'log' }) {
-    const element = new Element({ id: `logger_${this.__count++}`, type })
+  done (message = '') {
+    return this.__write(message, done)
+  },
 
-    element.update({ message })
+  __write (message = '', type = log) {
+    const logMessage = ensureNewline(type(message))
+
+    process.stdout.write(logMessage)
   }
 }
-
-export default logger

@@ -2,12 +2,12 @@
 
 import '@babel/polyfill'
 
-import shell from '../helpers/shell'
+import logger from '../helpers/logger'
 
 import cleanKarafCmds from './commands'
 import cleanKarafUtils from './util/index'
 
-if (cleanKarafUtils.isHelp) shell.echo(cleanKarafUtils.help)
+if (cleanKarafUtils.isHelp) logger.log(cleanKarafUtils.help)
 
 else {
   cleanKarafCmds.clearCache().then(() => {

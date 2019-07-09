@@ -1,14 +1,10 @@
 import { access, watch, constants } from 'fs'
 
 import shell from '../helpers/shell'
-import generic from '../helpers/generic'
 import logger from '../helpers/logger'
 
 import pentahoServerUtils from './util/index'
 
-const CLEAN_KARAF_CMD = `clean-karaf -r ./pentaho-solutions/`
-
-const PENTAHO_START_SH = `start-pentaho-debug.sh`
 const CATALINA_LOG = 'tomcat/logs/catalina.out'
 
 const STATUS_ON = 'online'
@@ -37,9 +33,11 @@ export default {
         throw new Error(`Pentaho Server already running!  PID: ${pid}`)
       }
 
-      await shell.rm(`-f promptuser.*`)
-      await generic.execP(CLEAN_KARAF_CMD, { silent: false })
-      await generic.execP(`./${PENTAHO_START_SH}`)
+      await shell.rm(`-f ./promptuser.*`)
+      await shell.spawn(`clean-karaf -r ./pentaho-solutions/`)
+      await shell.spawn(`./start-pentaho-debug.sh`, { silent: true })
+
+      logger.log(`Pentaho Server is starting...`)
 
       if (pentahoServerUtils.isTailMode) {
         return _tail()
@@ -47,8 +45,6 @@ export default {
     } catch (ex) {
       error = ex
     }
-
-    if (error == null) logger.log(`Pentaho Server is starting... PID: ${pid}`)
 
     return { error }
   },
@@ -64,8 +60,10 @@ export default {
         throw new Error(`No Pentaho Server process to shutdown!`)
       }
 
-      await generic.execP(`kill -9 ${pid}`, { silent: false })
+      await shell.kill(`-9 ${pid}`)
     } catch (ex) {
+      // logger.debug('##### ' + ex.message + ' #####')
+
       error = ex
     }
 
@@ -74,41 +72,53 @@ export default {
     return { error }
   },
 
-  restart () {
-    return this.stop()
-      .then(() => __wait())
-      .then(() => this.start())
+  async restart () {
+    let error = null
+
+    try {
+      await this.stop()
+      await __wait()
+
+      await this.start()
+    } catch (ex) {
+      // logger.debug('##### ' + ex.message + ' #####')
+
+      error = ex
+    }
+
+    return { error }
   }
 }
 
 // --- Private ---
 
-const _serverStatus = () => {
-  return __pentahoServerPID().then((pid) => {
-    return {
-      status: pid != null ? STATUS_ON : STATUS_OFF,
-      pid
-    }
-  })
-}
+const _serverStatus = () => __pentahoServerPID().then(({ pid }) => ({
+  pid, status: pid != null ? STATUS_ON : STATUS_OFF
+}))
 
 const _tail = (filename = CATALINA_LOG) => {
-  return __waitForFile(filename).then(() => {
-    shell.tail(`-f ./${filename}`)
-  })
+  return __waitForFile(filename).then(() => shell.tail(`-f ./${filename}`))
 }
 
-const __pentahoServerPID = () => {
-  return generic.execP('ps T').then((output) => {
-    const [, ...lines] = output.split('\n')
+const __pentahoServerPID = async () => {
+  let error = null
 
-    const [javaPId] = lines
+  try {
+    const output = await shell.ps('T')
+    if (output == null) return null
+
+    const [, ...lines] = output.split('\n')
+    const [ javaPId ] = lines
       .filter(info => info.includes('java'))
       .map(java => java.trim())
       .map(trimmed => trimmed.split(/\s+/).shift())
 
-    return javaPId
-  })
+    return { pid: javaPId }
+  } catch (ex) {
+    error = null
+  }
+
+  return { error }
 }
 
 const __wait = (timeout = 500) => new Promise((resolve, reject) => {

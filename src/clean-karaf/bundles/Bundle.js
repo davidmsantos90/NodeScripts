@@ -2,6 +2,7 @@ import { existsSync } from 'fs'
 import { join, parse } from 'path'
 
 import shell from '../../helpers/shell'
+import logger from '../../helpers/logger'
 
 const mapToPath = (array, path) => array.map((folder) => join(path, folder))
 
@@ -55,12 +56,12 @@ export default class Bundle {
   async activate () {
     await this.__move(this.__storeFolders, this.__karafFolders)
 
-    shell.echo(`[INFO]  - '${this.id}' was activated!`)
+    logger.info(`- '${this.id}' was activated!`)
   }
 
   async store () {
     await this.__move(this.__karafFolders, this.__storeFolders)
 
-    shell.echo(`[INFO]  - '${this.id}' was stored!`)
+    logger.info(`- '${this.id}' was stored!`)
   }
 }

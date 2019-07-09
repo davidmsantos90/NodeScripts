@@ -1,148 +1,141 @@
-import { spawn } from 'child_process'
+import '@babel/polyfill'
 
-import chalk from 'chalk'
-import { exec } from 'shelljs'
+import { spawn, spawnSync, exec } from 'child_process'
+
+import logger from './logger'
+// import terminal from './visual/terminal'
 
 const INFO_REGX = /(.*?)(\[INFO\]|INFO:?)(.+)/
-const INFO_TAG = chalk.blue(chalk.bold('[INFO]  ')) + chalk.reset()
 
 const WARN_REGX = /(.*?)(\[(?:WARNING|WARN)\]|(?:WARNING|WARN):?)(.+)/
-const WARN_TAG = chalk.yellow(chalk.bold('[WARN]  ')) + chalk.reset()
 
 const ERROR_REGX = /(.*?)(\[(?:ERROR|SEVERE)\]|(?:ERROR|SEVERE):?)(.+)/
-const ERROR_TAG = chalk.red(chalk.bold('[ERROR] ')) + chalk.reset()
 
 const DEBUG_REGX = /(.*?)(\[DEBUG\]|DEBUG:?)(.+)/
-const DEBUG_TAG = chalk.cyan(chalk.bold('[DEBUG] ')) + chalk.reset()
 
-const __colorLine = (data) => {
-  return data.toString().split('\n').map((line = '') => {
-    line = line.trim()
+const colorWrite = (data = '') => {
+  const lines = data.toString().split('\n').filter((line) => line != null && line !== '')
 
-    if (/^\s*$/.test(line)) return null
+  for (let line of lines) {
+    if (/^\s*$/.test(line)) logger.log()
 
-    if (ERROR_REGX.test(line)) {
-      return line.replace(ERROR_REGX, __tagLine(ERROR_TAG))
-    }
+    else if (INFO_REGX.test(line)) logger.info(line)
 
-    if (WARN_REGX.test(line)) {
-      return line.replace(WARN_REGX, __tagLine(WARN_TAG))
-    }
+    else if (WARN_REGX.test(line)) logger.warn(line)
 
-    if (DEBUG_REGX.test(line)) {
-      return line.replace(DEBUG_REGX, __tagLine(DEBUG_TAG))
-    }
+    else if (ERROR_REGX.test(line)) logger.error(line)
 
-    if (INFO_REGX.test(line)) {
-      return line.replace(INFO_REGX, __tagLine(INFO_TAG))
-    }
+    else if (DEBUG_REGX.test(line)) logger.debug(line)
 
-    return `${INFO_TAG + line.replace(/\s+/, ' ')}`
-  }).filter((line) => line != null || !/^\s*$/.test(line)).join('\n' + chalk.reset())
-}
-
-const __tagLine = (tag) => {
-  return (match, prefix = '', type, suffix) => {
-    const message = `${prefix.trim()} ${suffix.trim()}`.replace(/\s+/, ' ')
-
-    return `${tag + message}`.trim()
+    else logger.log(line)
   }
 }
 
-const __buildCommand = (spec = {}, { silent = false, dataProcessor }) => {
-  const options = Array.isArray(spec.options) ? spec.options : spec.options.split(' ')
+const buildCommand = ({ cmd = '', args = '' }) => `${cmd}${args !== '' ? ' ' : ''}${args}`
 
-  const command = spawn(spec.name, options, spec.spawn)
+const execCommand = (command = '', options = {}) => new Promise((resolve, reject) => {
+  exec(command, options, (error, stdout/* , stderr */) => {
+    if (error != null) reject(error)
+    else resolve(stdout)
+  })
+})
+
+const spawnCommand = async (command = '', { silent = false, color = true, ...options } = {}) => {
+  if (command === '') throw new Error('spawn: command needs to be defined!')
+
+  const spawedProcess = spawn(command, [], { silent, shell: true, ...options })
 
   let output = ''
-  command.stdout.on('data', (data) => {
+  spawedProcess.stdout.on('data', (data) => {
     output += data
-    if (!silent) {
-      if (dataProcessor != null) {
-        data = dataProcessor(data)
-      }
 
-      process.stdout.write(data)
+    if (!silent) {
+      if (color) colorWrite(data)
+      else process.stdout.write(data)
     }
   })
 
   let error = ''
-  command.stderr.on('data', (data) => {
+  spawedProcess.stderr.on('data', (data) => {
     error += data
+
     if (!silent) {
       process.stdout.write(`[ERROR] ${data}`)
     }
   })
 
   return new Promise((resolve, reject) => {
-    command.on('exit', (code) => {
-      const isErrorCode = code !== 0
+    spawedProcess.on('exit', (code) => {
+      const isErrorCode = code !== 0 || error !== ''
       if (isErrorCode) return reject(error)
 
       resolve(output)
     })
+  }).catch((ex) => {
+    // terminal.error(ex.message)
   })
 }
 
-export default {
-  tail (options = [], config = {}) {
-    // for await (let data of tail.stdout) process.stdout.write(__colorLine(data))
+const spawnCommandSync = (command = '') => {
+  try {
+    const { output, error } = spawnSync(command, [], { shell: true })
 
-    return __buildCommand({
-      name: 'tail', options, spawn: { silent: true }
-    }, Object.assign(config, { dataProcessor: __colorLine }))
-  },
+    if (error != null) throw error
 
-  mkdir (options = [], config = {}) {
-    return __buildCommand({
-      name: 'mkdir', options
-    }, config)
-  },
-
-  mv (options = [], config = {}) {
-    return __buildCommand({
-      name: 'mv', options
-    }, config)
-  },
-
-  cp (options = [], config = {}) {
-    return __buildCommand({
-      name: 'cp', options
-    }, config)
-  },
-
-  rm (options = [], config = {}) {
-    return __buildCommand({
-      name: 'rm', options
-    }, config)
-  },
-
-  echo (options = '', config = {}) {
-    return __buildCommand({
-      name: 'echo', options: [options]
-    }, config)
-  },
-
-  pwd (options = [], config = {}) {
-    return __buildCommand({
-      name: 'pwd', options, spawn: { silent: true }
-    }, Object.assign(config, { silent: true }))
-  },
-
-  execP (command, settings = { silent: true }) {
-    return new Promise((resolve, reject) => {
-      exec(command, settings, (code, output/*, error */) => {
-        const isErrorCode = code !== 0
-        if (isErrorCode) {
-          const error = Error(`Failed to execute: ${command}`)
-
-          return reject(error)
-        }
-
-        return resolve(output)
-      })
-    })
+    return { output }
+  } catch (error) {
+    return { error }
   }
+}
+
+export default {
+  exec: execCommand,
+  spawn: spawnCommand,
+  spawnSync: spawnCommandSync,
+
+  tail: (args = '', options = {}) => spawnCommand(
+    buildCommand({ cmd: 'tail', args }), { ...options }
+  ),
+
+  mkdir: (args = '', options = {}) => spawnCommand(
+    buildCommand({ cmd: 'mkdir', args }), { ...options }
+  ),
+
+  mv: (args = '', options = {}) => spawnCommand(
+    buildCommand({ cmd: 'mv', args }), { ...options }
+  ),
+
+  cp: (args = '', options = {}) => spawnCommand(
+    buildCommand({ cmd: 'cp', args }), { ...options }
+  ),
+
+  rm: (args = '', options = {}) => spawnCommand(
+    buildCommand({ cmd: 'rm', args }), { ...options }
+  ),
+
+  echo: (args = '', options = {}) => spawnCommand(
+    buildCommand({ cmd: 'echo', args }), { ...options }
+  ),
+
+  kill: (args = '', options = {}) => spawnCommand(
+    buildCommand({ cmd: 'kill', args }), { ...options, silent: true }
+  ),
+
+  pwd: (args = '', options = {}) => spawnCommand(
+    buildCommand({ cmd: 'pwd', args }), { ...options, silent: true }
+  ),
+
+  ps: (args = '', options = {}) => spawnCommand(
+    buildCommand({ cmd: 'ps', args }), { ...options, silent: true }
+  ),
+
+  which: (args = '', options = {}) => spawnCommand(
+    buildCommand({ cmd: 'which', args }), { ...options, silent: true }
+  ),
+
+  touch: (args = '', options = {}) => spawnCommand(
+    buildCommand({ cmd: 'touch', args }), { ...options, silent: true }
+  )
 }
 
 // const persistence = (number) => {

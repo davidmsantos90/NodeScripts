@@ -1,7 +1,7 @@
 import '@babel/polyfill'
 
 import shell from './shell'
-import ProgressBar from './ProgressBar'
+import ProgressBar from './visual/ProgressBar'
 
 import {
   get as httpGet,
