@@ -34,7 +34,7 @@ const colorWrite = (data = '') => {
 const buildCommand = ({ cmd = '', args = '' }) => `${cmd}${args !== '' ? ' ' : ''}${args}`
 
 const execCommand = (command = '', options = {}) => new Promise((resolve, reject) => {
-  exec(command, options, (error, stdout/* , stderr */) => {
+  exec(command, { ...options, maxBuffer: 1024 * 1024 }, (error, stdout/* , stderr */) => {
     if (error != null) reject(error)
     else resolve(stdout)
   })

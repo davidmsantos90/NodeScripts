@@ -1,12 +1,12 @@
 import { options, help } from './arguments'
 
+// import terminal from '../../helpers/visual/terminal'
 import commands from '../commands/index'
 
 import {
   PentahoServer,
-  AnalyzerPlugin,
-  DashboardDesignerPlugin,
-  PdiClient
+  PdiClient,
+  createPlugin
 } from '../artifacts/index'
 
 export const SERVER_EXEC = 'server'
@@ -55,7 +55,7 @@ export const isHelpEnabled = () => options.help
 export const helpText = () => help
 
 export const setup = async () => {
-  const { execution, build, type, path: root, link } = options
+  const { execution, build, type, path: root, link, plugins = [] } = options
 
   const isEnterprise = !execution.endsWith('-ce')
 
@@ -74,21 +74,18 @@ export const setup = async () => {
 
   let builds = []
   if (isAllMode || execution.startsWith(SERVER_EXEC)) {
-    builds = [ new PentahoServer(setupOptions) ]
+    const server = new PentahoServer(setupOptions)
+    const serverPlugins = isEnterprise
+      ? plugins.map((name) => createPlugin(name, setupOptions))
+      : []
 
-    if (isEnterprise) {
-      builds = [
-        ...builds,
-        new AnalyzerPlugin(setupOptions),
-        new DashboardDesignerPlugin(setupOptions)
-      ]
-    }
+    builds = [ server, ...serverPlugins ]
   }
 
   if (isAllMode || execution.startsWith(PDI_EXEC)) {
-    builds = [
-      ...builds, new PdiClient(setupOptions)
-    ]
+    const pdi = new PdiClient(setupOptions)
+
+    builds = [ pdi, ...builds ]
   }
 
   let error = null
@@ -101,6 +98,8 @@ export const setup = async () => {
     if (link == null) {
       throw new Error(`Define 'link' in the './local.config.json' or by using the '-p' option!`)
     }
+
+    builds = builds.filter((build) => build != null)
 
     let { error: downEx } = await commands.download({ builds, ...setupOptions })
     if (downEx != null) throw downEx

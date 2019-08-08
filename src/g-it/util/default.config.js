@@ -15,20 +15,15 @@ const _getLocalConfiguration = () => {
   return localConfiguration
 }
 
-const DEFAULT_LINK = 'http://build.pentaho.com/hosted'
+const DEFAULT_ORG = 'pentaho'
 
 const {
-  execution,
-  path,
-  link = DEFAULT_LINK,
-  type,
-  version,
-  build,
-  debug,
-  help,
-  plugins
+  command, organization = DEFAULT_ORG, project, members
 } = _getLocalConfiguration()
 
 export default {
-  execution, path, link, type, version, build, debug, help, plugins
+  command,
+  organization,
+  project,
+  members: [ ...members, { name: 'upstream', user: organization } ]
 }

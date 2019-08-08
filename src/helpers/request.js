@@ -67,6 +67,29 @@ const responseHandler = ({
   })
 }
 
+export const get = (url, headers = {}) => new Promise((resolve, reject) => {
+  let data = ''
+
+  const isSecureUrl = url.startsWith('https')
+  const getMethod = isSecureUrl ? httpsGet : httpGet
+
+  getMethod(url, {
+    headers
+  }, (response) => {
+    response.on('data', (chunk) => {
+      data += chunk
+    })
+
+    response.on('error', (error) => {
+      reject(error)
+    })
+
+    response.on('end', () => {
+      resolve(data)
+    })
+  })
+})
+
 export default {
   get ({ url = '', destination = '', responseSuccessCheck }) {
     if (url === '') {

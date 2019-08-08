@@ -1,80 +1,132 @@
-const GitUtils = () => {
-  const GIT_API = 'https://api.github.com/'
-  const TOKEN = '35b3bd4bca424a1c601c32cb2883d721285f9c36'
+import { get } from '../../helpers/request'
+import logger from '../../helpers/logger'
 
-  const _buildGitApiCurlRequest = (endpoint, params = '') => {
-    const authenticationHeader = `-H 'Authorization: token ${ TOKEN }'`
-    const requestParams = `?per_page=100${ params != '' ? '&' + params : '' }`
+import args from './arguments'
 
-    return `curl ${ authenticationHeader } '${ GIT_API + endpoint + requestParams }'`
-  }
+const PPP_PROJECT_PREFIX = 'pentaho-platform-plugin-'
+const PPP_ALIAS_PREFIX = 'ppp-'
 
-  const _lessThanFilter = (months) => {
-    return ({ name, updatedAt }) => {
-      const lastUpdateDate = new Date(updatedAt)
-      const currentDate = new Date()
+const PP_PROJECT_PREFIX = 'pentaho-platform-'
+const PP_ALIAS_PREFIX = 'pp-'
 
-      const yearGap = currentDate.getFullYear() - lastUpdateDate.getFullYear()
-      const monthGap = currentDate.getMonth() - lastUpdateDate.getMonth()
+const P_PROJECT_PREFIX = 'pentaho-'
+const P_ALIAS_PREFIX = 'p-'
 
-      const monthsSinceLastUpdate = monthGap + 12*yearGap
+const GIT_API_URL = 'https://api.github.com'
+const GIT_API_ACCEPT_HEADER = 'application/vnd.github.v3+json'
+const GIT_API_USER_AGENT_HEADER = 'davidmsantos90'
 
-      return monthsSinceLastUpdate < months
-    }
-  }
+export const options = args.options
+export const requestGitApi = async (url, { headers, ...props } = {}) => {
+  let result = null
 
-  const _sortRepositoryByName = (repo1, repo2) => {
-    const name1 = repo1.name.toLowerCase()
-    const name2 = repo2.name.toLowerCase()
+  try {
+    result = await get(url, {
+      ...props,
 
-    return name1 < name2 ? -1 : name1 > name2 ? 1 : 0
-  }
+      headers: {
+        ...headers,
 
-  return {
-    listPublicRepositories(organization = 'pentaho') {
-      const endpoint = `orgs/${ organization }/repos`
+        authorization: `token ${options.token}`,
+        accept: GIT_API_ACCEPT_HEADER,
 
-      return _buildGitApiCurlRequest(endpoint, 'type=public')
-    },
-
-    listPrivateRepositories(organization = 'pentaho') {
-      const endpoint = `orgs/${ organization }/repos`
-
-      return _buildGitApiCurlRequest(endpoint, 'type=private')
-    },
-
-    printRepositories(repositories) {
-      const filteredRepositories = repositories
-        .filter(_lessThanFilter(12))
-        .filter(({ isFork, isArchived }) => !isFork && !isArchived)
-        .sort(_sortRepositoryByName)
-
-      const count = filteredRepositories.length
-
-      console.log('')
-      console.log(`+--------------+----------------------+------------------------------`)
-      console.log(`|              |     Organization     |     Repository               `)
-      console.log(`+--------------+----------------------+------------------------------`)
-
-      for(let index = 0; index < count; index++) {
-        const { name, fullName, isPrivate } = filteredRepositories[index]
-
-        const [ organization, repo ] = fullName.split('/')
-        const isPentaho = organization === 'pentaho'
-
-        var customRepoName = repo
-          .replace(/^pentaho-platform-plugin-/, 'ppp-')
-          .replace(/^pentaho-platform-(?!ee)/, 'pp-')
-          .replace(/^pentaho-/, 'p-')
-
-        console.log(`|${ isPrivate ? '  Private' : '  Public ' }     |       ${ isPentaho ? 'Pentaho   ' : 'Webdetails' }     |  ${ customRepoName }`)
+        'user-agent': GIT_API_USER_AGENT_HEADER
       }
+    })
 
-      console.log(`+--------------+----------------------+------------------------------`)
-
-      console.log(`\n> Found ${ count } Repositories in Total <`)
-    }
+    return JSON.parse(result)
+  } catch (ex) {
+    logger.error(ex.message)
   }
+
+  return result
 }
 
-export default GitUtils()
+export const listReposEndpoint = () => requestGitApi(`${GIT_API_URL}/orgs/${options.organization}/repos`)
+
+export const buildSshLink = ({
+  user, project
+}) => `git@github.com:${user}/${project}.git`
+
+export const toAlias = (project = '') => {
+  if (project.startsWith(PPP_PROJECT_PREFIX)) {
+    return project.replace(PPP_PROJECT_PREFIX, PPP_ALIAS_PREFIX)
+  }
+
+  if (project.startsWith(PP_PROJECT_PREFIX) && !project.endsWith('platform-ee')) {
+    return project.replace(PP_PROJECT_PREFIX, PP_ALIAS_PREFIX)
+  }
+
+  if (project.startsWith(P_PROJECT_PREFIX)) {
+    return project.replace(P_PROJECT_PREFIX, P_ALIAS_PREFIX)
+  }
+
+  return project
+}
+
+export const toProject = (alias = '') => {
+  if (alias.startsWith(PPP_ALIAS_PREFIX)) {
+    return alias.replace(PPP_ALIAS_PREFIX, PPP_PROJECT_PREFIX)
+  }
+
+  if (alias.startsWith(PP_ALIAS_PREFIX)) {
+    return alias.replace(PP_ALIAS_PREFIX, PP_PROJECT_PREFIX)
+  }
+
+  if (alias.startsWith(P_ALIAS_PREFIX)) {
+    return alias.replace(P_ALIAS_PREFIX, P_PROJECT_PREFIX)
+  }
+
+  return alias
+}
+
+export const printRepositories = (repositories) => {
+  const filteredRepositories = repositories
+    // .filter(({ name, updatedAt }) => {
+    //   const months = 12
+    //
+    //   const lastUpdateDate = new Date(updatedAt)
+    //   const currentDate = new Date()
+    //
+    //   const yearGap = currentDate.getFullYear() - lastUpdateDate.getFullYear()
+    //   const monthGap = currentDate.getMonth() - lastUpdateDate.getMonth()
+    //
+    //   const monthsSinceLastUpdate = monthGap + 12 * yearGap
+    //
+    //   return monthsSinceLastUpdate < months
+    // })
+    .filter(({ isFork, isArchived }) => !isFork && !isArchived)
+    .sort(({ name: name1 }, { name: name2 }) => {
+      name1 = name1.toLowerCase()
+      name2 = name2.toLowerCase()
+
+      return name1 < name2 ? -1 : name1 > name2 ? 1 : 0
+    })
+
+  const count = filteredRepositories.length
+
+  logger.log('')
+  logger.log(`+--------------+----------------------+------------------------------`)
+  logger.log(`|              |     Organization     |     Repository               `)
+  logger.log(`+--------------+----------------------+------------------------------`)
+
+  for (let index = 0; index < count; index++) {
+    const { fullName, isPrivate } = filteredRepositories[index]
+
+    const [ organization, repo ] = fullName.split('/')
+    const isPentaho = organization === 'pentaho'
+
+    const alias = toAlias(repo)
+
+    logger.log(`|${isPrivate ? '  Private' : '  Public '}     |       ${isPentaho ? 'Pentaho   ' : 'Webdetails'}     |  ${alias}`)
+  }
+
+  logger.log(`+--------------+----------------------+------------------------------`)
+
+  logger.log(`\n> Found ${count} Repositories in Total <`)
+}
+
+export default {
+  listReposEndpoint,
+  printRepositories
+}

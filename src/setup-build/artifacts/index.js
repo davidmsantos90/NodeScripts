@@ -1,7 +1,12 @@
 import Artifact from './Artifact'
 import PdiClient from './PdiClient'
 import PentahoServer from './PentahoServer'
-import PlaftformPlugin, { AnalyzerPlugin, DashboardDesignerPlugin } from './PlatformPlugin'
+import PlaftformPlugin, {
+  AnalyzerPlugin,
+  DashboardDesignerPlugin,
+  InteractiveReportingPlugin,
+  createPlugin
+} from './PlatformPlugin'
 
 export {
   Artifact,
@@ -10,9 +15,21 @@ export {
 
   PlaftformPlugin,
   AnalyzerPlugin,
-  DashboardDesignerPlugin
+  DashboardDesignerPlugin,
+  InteractiveReportingPlugin,
+
+  createPlugin
 }
 
 export default {
-  Artifact, PdiClient, PentahoServer, AnalyzerPlugin, DashboardDesignerPlugin
+  Artifact,
+  PdiClient,
+  PentahoServer,
+
+  PlaftformPlugin,
+  AnalyzerPlugin,
+  DashboardDesignerPlugin,
+  InteractiveReportingPlugin,
+
+  createPlugin
 }

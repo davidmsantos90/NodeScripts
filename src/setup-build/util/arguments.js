@@ -37,6 +37,11 @@ const optionsConfiguration = [
     defaultValue: defaults.build,
     description: 'Build number to setup: [1, 2, ..., 30, ...]'
   }, {
+    name: 'plugins',
+    alias: 'x',
+    defaultValue: defaults.plugins,
+    description: 'Server plugins!'
+  }, {
     name: 'path',
     alias: 'p',
     defaultValue: defaults.path,
