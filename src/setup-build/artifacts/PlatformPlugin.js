@@ -20,9 +20,7 @@ export default class PlaftformPlugin extends Artifact {
 
   /** @Override */
   get id () {
-    const { name } = this.__properties
-
-    return `server/.../${name}`
+    return `${SERVER_EE_NAME}/.../${this.__pluginFolder}`
   }
 
   /** @Override */

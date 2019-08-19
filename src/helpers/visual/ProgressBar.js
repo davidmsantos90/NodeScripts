@@ -1,3 +1,5 @@
+// import terminal from './terminal'
+
 import Element from './Element'
 import { done, error, info } from './Logger'
 import {
@@ -43,6 +45,8 @@ export default class ProgressBar extends Element {
   }
 
   set progress (downloaded) {
+    this.__downloaded = downloaded
+
     const total = this.__total
     if (!total) this.__rejected = true
 
@@ -70,6 +74,7 @@ export default class ProgressBar extends Element {
     const output = this._drawCaption() +
       separator + this._drawBar() +
       separator + this._drawClock() +
+      separator + this._drawSize() +
       separator + this._drawProgressPercentage()
 
     this._throttle()
@@ -85,6 +90,20 @@ export default class ProgressBar extends Element {
     setTimeout(() => {
       this.__inThrottle = false
     }, 100)
+  }
+
+  _drawSize () {
+    const total = this.__total / (1024 * 1024)
+    const isBigSize = total > 999
+
+    const downloaded = this.__downloaded / (1024 * 1024 * (isBigSize ? 1024 : 1))
+    const size = `${this._padL(downloaded.toFixed(2), ' ', 6)} ${isBigSize ? 'G' : 'M'}bs`
+
+    if (this.done) return greenBold(size)
+
+    if (this.rejected) return redBold(size)
+
+    return blueBold(size)
   }
 
   _drawCaption () {

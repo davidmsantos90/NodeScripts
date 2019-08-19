@@ -39,7 +39,7 @@ const stringDate = (date) => {
   const day = normalize(`${date.getDate()}`)
   const month = normalize(`${date.getMonth() + 1}`)
 
-  return `${day}-${month}`
+  return `${month}-${day}`
 }
 
 export const latestBuild = () => stringDate(new Date())

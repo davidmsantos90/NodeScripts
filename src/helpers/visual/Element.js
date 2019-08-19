@@ -2,7 +2,7 @@ import EventEmitter from 'events'
 
 import terminal from './terminal'
 
-const DISCOUNT_LENGTH = 85
+const DISCOUNT_LENGTH = 95
 
 const MINIMUM_LENGTH = 20
 
@@ -55,12 +55,14 @@ export default class Element extends EventEmitter {
   }
 
   reject ({ reason, ...options } = {}) {
-    if (reason == null) reason = `Element ${this.id} was rejected!`
-
-    this.__error = new Error(reason)
     this.__rejected = true
 
-    return this.update({ rejected: true, ...options })
+    if (reason == null) reason = `Element ${this.id} was rejected!`
+    const error = this.__error = new Error(reason)
+
+    this.update(options)
+
+    return error
   }
 
   update (options = {}) {

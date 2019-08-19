@@ -1,35 +1,50 @@
 import '@babel/polyfill'
 
-import shell from './shell'
+import generic from './generic'
+// import terminal from './visual/terminal'
 import ProgressBar from './visual/ProgressBar'
 
-import {
-  get as httpGet,
-  STATUS_CODES
-} from 'http'
+import { get as httpGet, STATUS_CODES } from 'http'
 import { get as httpsGet } from 'https'
 
-import generic from './generic'
+const EMPTY_FUNC = () => {}
+const HTTP_OK = STATUS_CODES[200]
 
-const isSuccessfulStatus = (status) => {
-  const okStatus = STATUS_CODES[200]
+const isOkStatus = (status) => STATUS_CODES[status] === HTTP_OK
+const isHttps = (url = '') => url.startsWith('https')
+const invalidArgError = (name = '') => new Error((`Invalid argument '${name}'`))
 
-  return STATUS_CODES[status] === okStatus
+export const simpleHandler = ({
+  response, resolve, reject
+}) => {
+  let data = ''
+
+  try {
+    response.on('data', (chunk) => (data += chunk))
+
+    response.on('error', (error) => reject(error))
+
+    response.on('end', () => resolve(data))
+  } catch (ex) {
+    reject(ex)
+  }
 }
 
-const responseHandler = ({
-  resolve, reject, destination, responseSuccessCheck = () => true
-} = {}) => (response) => {
+export const progressBarHandler = ({
+  response,
+  resolve,
+  reject,
+  destination,
+  validate = () => true
+}) => {
+  const { headers, statusCode } = response
   const {
-    headers: {
-      date,
-      'content-encoding': encoding,
-      'content-length': total
-    },
-    statusCode
-  } = response
+    date,
+    'content-encoding': encoding,
+    'content-length': total
+  } = headers
 
-  const responseSuccess = isSuccessfulStatus(statusCode) && responseSuccessCheck(date)
+  const responseSuccess = isOkStatus(statusCode) && validate(date)
 
   const progressBar = new ProgressBar({
     id: destination.replace(/.+\/(.+)/, '$1'),
@@ -37,84 +52,66 @@ const responseHandler = ({
   })
 
   if (!responseSuccess) {
-    const error = progressBar.reject({ error: 'response not successfull' })
-
-    return reject(error)
+    return reject(progressBar.reject({
+      reason: 'response handler not successfull'
+    }))
   }
 
-  const downloadStream = generic.createDownloadStream({ path: destination, encoding })
+  try {
+    const downloadStream = generic.createDownloadStream({ path: destination, encoding })
 
-  let downloaded = 0
-  response.on('data', (chunk) => {
-    downloadStream.write(chunk, encoding)
-    downloaded += chunk.length
-
-    progressBar.update({ downloaded })
-  })
-
-  response.on('error', (error) => {
-    downloadStream.destroy()
-
-    reject(progressBar.reject({ error: 'download stream error! ' + error }))
-  })
-
-  response.on('end', () => {
-    downloadStream.end()
-
-    progressBar.end({ downloaded: total })
-
-    resolve()
-  })
-}
-
-export const get = (url, headers = {}) => new Promise((resolve, reject) => {
-  let data = ''
-
-  const isSecureUrl = url.startsWith('https')
-  const getMethod = isSecureUrl ? httpsGet : httpGet
-
-  getMethod(url, {
-    headers
-  }, (response) => {
+    let downloaded = 0
     response.on('data', (chunk) => {
-      data += chunk
+      downloadStream.write(chunk, encoding)
+      downloaded += chunk.length
+
+      progressBar.update({ downloaded })
     })
 
-    response.on('error', (error) => {
-      reject(error)
+    response.on('error', (data) => {
+      downloadStream.destroy()
+
+      reject(progressBar.reject({
+        reason: 'download stream error! ' + data
+      }))
     })
 
     response.on('end', () => {
-      resolve(data)
+      downloadStream.end()
+
+      progressBar.end({ downloaded: total })
+
+      resolve()
     })
-  })
-})
+  } catch (ex) {
+    reject(progressBar.reject({
+      reason: 'response handler error! ' + ex.message
+    }))
+  }
+}
+
+export const get = ({
+  url,
+  headers = {},
+  responseHandler,
+  success = EMPTY_FUNC,
+  failure = EMPTY_FUNC,
+  ...options
+}) => new Promise((resolve, reject) => {
+  if (url == null) return reject(invalidArgError('url'))
+  if (responseHandler == null) return reject(invalidArgError('responseHandler'))
+
+  const getRequest = isHttps(url) ? httpsGet : httpGet
+
+  try {
+    getRequest(url, {
+      headers
+    }, (response) => responseHandler({ response, resolve, reject, ...options }))
+  } catch (ex) {
+    reject(ex)
+  }
+}).then(success).catch(failure)
 
 export default {
-  get ({ url = '', destination = '', responseSuccessCheck }) {
-    if (url === '') {
-      const error = `'url' parameter must be defined to make a 'get' request`
-
-      return Promise.reject(error)
-    }
-
-    return new Promise((resolve, reject) => {
-      try {
-        const isSecureUrl = url.startsWith('https')
-        const getMethod = isSecureUrl ? httpsGet : httpGet
-
-        getMethod(url, {
-          headers: { 'accept-encoding': 'gzip,deflate' }
-        }, responseHandler({
-          resolve, reject, destination, responseSuccessCheck
-        }))
-      } catch (exception) {
-        return reject(exception)
-      }
-    }).catch((error) => {
-      shell.rm(`-rf ${destination}`)
-
-      return error
-    })
-  }
+  get
 }

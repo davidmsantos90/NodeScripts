@@ -3,15 +3,25 @@ import { parse } from 'path'
 
 import terminal from '../../helpers/visual/terminal'
 
+import shell from '../../helpers/shell'
 import generic from '../../helpers/generic'
-import request from '../../helpers/request'
+import { get, progressBarHandler } from '../../helpers/request'
 
 import { isLatestBuild } from '../util/index'
+
+const downloadFailure = (destination) => (error) => {
+  shell.rm(`-rf ${destination}`)
+
+  // TODO log error?
+
+  return error
+}
 
 const download = async ({
   downloadURL: url,
   downloadOutput: destination
 }, options) => {
+  let result = null
   let error = null
 
   try {
@@ -23,17 +33,24 @@ const download = async ({
     } else {
       const { type } = options
 
-      await request.get({
+      result = await get({
         url,
         destination,
-        responseSuccessCheck: (date) => type !== 'snapshot' || isLatestBuild(date)
+
+        headers: {
+          'accept-encoding': 'gzip,deflate'
+        },
+
+        responseHandler: progressBarHandler,
+        failure: downloadFailure(destination),
+        validate: (date) => type !== 'snapshot' || isLatestBuild(date)
       })
     }
   } catch (ex) {
     error = ex
   }
 
-  return { error }
+  return { result, error }
 }
 
 export default async ({ builds = [], ...options }) => {
