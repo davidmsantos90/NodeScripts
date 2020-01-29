@@ -28,13 +28,15 @@ export const markAsCleanedUp = async (base) => {
   return shell.touch(file)
 }
 
-export const enableKarafFeatures = async (base, karafEtcFolder) => {
+export const enableKarafFeatures = async (base, karafEtcFolder, features = []) => {
+  const FEATURE_SEP = '\\\n  '
+
   const file = join(base, karafEtcFolder, 'org.apache.karaf.features.cfg')
 
-  const placeholder = 'featuresBoot='
+  const placeholder = `featuresBoot=${FEATURE_SEP}(http,${FEATURE_SEP}kar),${FEATURE_SEP}`
 
-  const featuresToAdd = 'ssh,pentaho-marketplace,'
-  const valueToReplace = `${placeholder + featuresToAdd}`
+  const featuresToAdd = features.join(`,${FEATURE_SEP}`)
+  const valueToReplace = `${placeholder + featuresToAdd},${FEATURE_SEP}`
 
   return generic.readWriteFile({ file, placeholder, valueToReplace })
 }

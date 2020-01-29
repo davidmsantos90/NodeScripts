@@ -2,7 +2,7 @@ import EventEmitter from 'events'
 
 import terminal from './terminal'
 
-const DISCOUNT_LENGTH = 95
+const DISCOUNT_LENGTH = 97
 
 const MINIMUM_LENGTH = 20
 

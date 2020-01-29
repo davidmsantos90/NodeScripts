@@ -128,7 +128,12 @@ export default class ProgressBar extends Element {
 
   _drawClock () {
     const elapsedTime = this.elapsedTime
-    const clock = `${this._padL(elapsedTime.getMinutes())}:${this._padL(elapsedTime.getSeconds())}`
+
+    const hours = this._padL(elapsedTime.getHours() - 1)
+    const minutes = this._padL(elapsedTime.getMinutes())
+    const seconds = this._padL(elapsedTime.getSeconds())
+
+    const clock = `${hours}:${minutes}:${seconds}`
 
     if (this.done) return greenBold(clock)
 

@@ -44,7 +44,7 @@ export default class PentahoServer extends Artifact {
       ...this.__cleanups,
 
       disableServerStartPrompt,
-      enableServerSshConsoleBrige,
+      // enableServerSshConsoleBrige,
       enableServerKarafFeatures,
       enableServerKarafLocalDependencies,
 
