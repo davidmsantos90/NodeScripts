@@ -1,7 +1,6 @@
 import { join } from 'path'
 
 import generic from '../../helpers/generic'
-// import terminal from '../../helpers/visual/terminal'
 
 import Artifact, {
   PDI_FOLDER,
@@ -14,9 +13,11 @@ import Artifact, {
 export const PDI_CE_NAME = 'pdi-ce'
 export const PDI_EE_NAME = 'pdi-ee-client'
 
+export const PDI_EXTRA_FEATURES = ['ssh']
+
 // Pdi Cleanups
 
-export const enablePdiKarafFeatures = (source) => enableKarafFeatures(source, PDI_KARAF_ETC_FOLDER)
+export const enablePdiKarafFeatures = (source) => enableKarafFeatures(source, PDI_KARAF_ETC_FOLDER, PDI_EXTRA_FEATURES)
 
 export const enablePdiKarafLocalDependencies = (source) => enableKarafLocalDependencies(source, PDI_KARAF_ETC_FOLDER)
 

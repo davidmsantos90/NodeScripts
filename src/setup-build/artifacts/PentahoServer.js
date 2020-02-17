@@ -15,9 +15,11 @@ import Artifact, {
 export const SERVER_CE_NAME = 'pentaho-server-ce'
 export const SERVER_EE_NAME = 'pentaho-server-ee'
 
+export const SERVER_EXTRA_FEATURES = ['ssh', 'pentaho-marketplace']
+
 // Server Cleanups
 
-export const enableServerKarafFeatures = async (source) => enableKarafFeatures(source, SERVER_KARAF_ETC_FOLDER)
+export const enableServerKarafFeatures = async (source) => enableKarafFeatures(source, SERVER_KARAF_ETC_FOLDER, SERVER_EXTRA_FEATURES)
 
 export const enableServerKarafLocalDependencies = async (source) => enableKarafLocalDependencies(source, SERVER_KARAF_ETC_FOLDER)
 

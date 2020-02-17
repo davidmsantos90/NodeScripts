@@ -29,6 +29,8 @@ export const markAsCleanedUp = async (base) => {
 }
 
 export const enableKarafFeatures = async (base, karafEtcFolder, features = []) => {
+  if (!features.length) return
+
   const FEATURE_SEP = '\\\n  '
 
   const file = join(base, karafEtcFolder, 'org.apache.karaf.features.cfg')
