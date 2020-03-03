@@ -1,8 +1,6 @@
 import { existsSync } from 'fs'
 import { join } from 'path'
 
-// import logger from '../../helpers/logger'
-
 import bundles from '../bundles/index'
 
 import { options, help, defaults } from './arguments'

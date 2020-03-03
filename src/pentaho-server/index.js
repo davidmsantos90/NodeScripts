@@ -3,7 +3,7 @@
 import pentahoServerCmds from './commands'
 import pentahoServerUtils from './util/index'
 
-import logger from '../helpers/logger'
+import logger from './server-logger'
 
 const command = async () => {
   if (pentahoServerUtils.isRestart) return pentahoServerCmds.restart()

@@ -1,7 +1,9 @@
 #! /usr/bin/env node
 
-import shell from '../helpers/shell'
-import logger from '../helpers/logger'
+import shell from 'node-shell'
+import Logger from 'node-log'
+
+const logger = new Logger({})
 
 shell.exec('java -version 2>&1').then((output) => {
   const isOpenJDK = output.includes('OpenJDK')

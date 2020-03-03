@@ -18,11 +18,13 @@
   "license": "MIT",
   "dependencies": {
     "@babel/polyfill": "^7.2.5",
-    "chalk": "^2.4.2",
     "command-line-args": "^4.0.0",
     "command-line-usage": "^4.0.0",
     "decompress": "^4.2.0",
-    "get-cursor-position": "^1.0.5"
+    "scripts-api": "file:local-modules/scripts-api",
+    "node-cursor-position": "file:local-modules/node-cursor-position",
+    "node-log": "file:local-modules/node-log",
+    "node-shell": "file:local-modules/node-shell"
   },
   "devDependencies": {
     "@babel/cli": "^7.1.2",

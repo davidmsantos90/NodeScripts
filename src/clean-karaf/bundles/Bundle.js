@@ -1,8 +1,8 @@
 import { existsSync } from 'fs'
 import { join, parse } from 'path'
 
-import shell from '../../helpers/shell'
-import logger from '../../helpers/logger'
+import shell from 'node-shell'
+import logger from '../clean-logger'
 
 const mapToPath = (array, path) => array.map((folder) => join(path, folder))
 

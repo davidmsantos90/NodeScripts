@@ -1,6 +1,6 @@
-import shell from '../helpers/shell'
+import shell from 'node-shell'
 
-import logger from '../helpers/logger'
+import logger from './clean-logger'
 
 import cleanKarafUtils from './util/index'
 

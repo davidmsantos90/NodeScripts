@@ -3,8 +3,7 @@ import {
   readFile, writeFile, stat, access, constants, createWriteStream
 } from 'fs'
 
-import shell from './shell'
-import logger from './logger'
+import shell from 'node-shell'
 
 const DOWNLOAD_FOLDER = join(sep, 'home', 'dams', 'Downloads')
 
@@ -16,7 +15,7 @@ export default {
     const { error } = shell.spawnSync(`mkdir -p ${dirname(path)}`)
 
     if (error != null) {
-      return logger.error(error.message)
+      // return logger.error(error.message)
     }
 
     return createWriteStream(path, { encoding })

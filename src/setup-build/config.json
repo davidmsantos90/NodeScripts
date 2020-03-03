@@ -1,0 +1,16 @@
+{
+  "path": "/home/dams/builds",
+  "link": "http://lisbon-build.pentaho.com/hosted",
+
+  "version": "9.1.0.0",
+  "type": "snapshot",
+
+  "build": "latest",
+  "execution": "all",
+
+  "plugins": [
+    { "name": "paz-plugin-ee", "folder": "analyzer" },
+    { "name": "pdd-plugin-ee", "folder": "dashboards" },
+    { "name": "pir-plugin-ee", "folder": "pentaho-interactive-reporting" }
+  ]
+}

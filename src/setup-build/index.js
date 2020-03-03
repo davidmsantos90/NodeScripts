@@ -2,26 +2,12 @@
 
 import '@babel/polyfill'
 
-import { setup, helpText, isHelpEnabled } from './util/index'
+import logger from './setup-logger'
 
-import logger from '../helpers/logger'
-import terminal from '../helpers/visual/terminal'
+import SetupController from './controller'
 
-// ---
+logger.info('Creating application controller')
 
-const endProcess = ({ error }) => {
-  if (error != null) terminal.error(error.message)
+const controller = new SetupController({ logger })
 
-  terminal._exit()
-  process.exit()
-}
-
-if (isHelpEnabled()) {
-  logger.log(helpText())
-
-  endProcess()
-}
-
-terminal.init()
-
-setup().then(endProcess).catch(endProcess)
+controller.execute()

@@ -2,7 +2,7 @@
 
 import '@babel/polyfill'
 
-import logger from '../helpers/logger'
+import logger from './clean-logger'
 
 import cleanKarafCmds from './commands'
 import cleanKarafUtils from './util/index'

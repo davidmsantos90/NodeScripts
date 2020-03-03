@@ -1,7 +1,7 @@
 import { access, watch, constants } from 'fs'
 
-import shell from '../helpers/shell'
-import logger from '../helpers/logger'
+import shell from 'node-shell'
+import logger from './server-logger'
 
 import pentahoServerUtils from './util/index'
 

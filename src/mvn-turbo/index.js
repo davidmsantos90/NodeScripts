@@ -1,6 +1,6 @@
 #! /usr/bin/env node
 
-import shell from '../helpers/shell'
+import shell from 'node-shell'
 
 const SKIP_TESTS = '-DskipTests=true'
 const SKIP_OPTIMIZE = '-Drequirejs.optimize.skip=true'
