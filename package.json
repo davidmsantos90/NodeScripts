@@ -20,7 +20,7 @@
     "@babel/polyfill": "^7.2.5",
     "command-line-args": "^4.0.0",
     "command-line-usage": "^4.0.0",
-    "decompress": "^4.2.0",
+    "decompress": "^4.2.1",
     "scripts-api": "file:local-modules/scripts-api",
     "node-cursor-position": "file:local-modules/node-cursor-position",
     "node-log": "file:local-modules/node-log",
